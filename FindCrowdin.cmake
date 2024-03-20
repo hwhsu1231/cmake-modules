@@ -56,13 +56,8 @@ set(_Crowdin_SEARCH_PATHS)
 
 find_program(Crowdin_EXECUTABLE
     NAMES ${_CROWDIN_NAME}
-    # NO_PACKAGE_ROOT_PATH          # 1st: paths in <PackageName>_ROOT cache/environment variables.
-    # NO_CMAKE_PATH                 # 2nd: paths in cmake-specific cache variables.
-    # NO_CMAKE_ENVIRONMENT_PATH     # 3rd: paths in cmake-specific environment variables.
-    HINTS ${_Crowdin_SEARCH_HINTS}  # 4th: paths in HINTS option.
-    # NO_SYSTEM_ENVIRONMENT_PATH    # 5th: paths in standard system environment variables (PATH env).
-    # NO_CMAKE_SYSTEM_PATH          # 6th: paths in cmake variables defined in Platform files.
-    PATHS ${_Crowdin_SEARCH_PATHS}  # 7th: paths in PATHS option.
+    HINTS ${_Crowdin_SEARCH_HINTS}
+    PATHS ${_Crowdin_SEARCH_PATHS}
     DOC "The full path to the crowdin executable.")
 
 if(WIN32)
@@ -79,12 +74,6 @@ if(WIN32)
         endif()
         unset(_ENV_Crowdin_ROOT_DIR)
     endif()
-    # set(_ENV_CROWDIN_HOME "$ENV{CROWDIN_HOME}")
-    # # message("_ENV_CROWDIN_HOME = ${_ENV_CROWDIN_HOME}")
-    # if(NOT _ENV_CROWDIN_HOME)
-    #     message(FATAL_ERROR "ENV{CROWDIN_HOME} is empty! Please make sure Crowdin_ROOT_DIR, ENV{Crowdin_ROOT_DIR}, or ENV{CROWDIN_HOME} is set before calling find_package(Crowdin).")
-    # endif()
-    # unset(_ENV_CROWDIN_HOME)
 endif()
 
 if(Crowdin_EXECUTABLE)
@@ -118,8 +107,7 @@ if(Crowdin_FOUND)
         if(NOT TARGET Crowdin::Crowdin)
             add_executable(Crowdin::Crowdin IMPORTED)
             set_target_properties(Crowdin::Crowdin PROPERTIES
-                IMPORTED_LOCATION "${Crowdin_EXECUTABLE}"
-            )
+                IMPORTED_LOCATION "${Crowdin_EXECUTABLE}")
         endif()
     endif()
     unset(_Crowdin_CMAKE_ROLE)
