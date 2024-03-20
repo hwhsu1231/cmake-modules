@@ -1,5 +1,5 @@
-# https://github.com/cmake-basis/BASIS/blob/master/src/cmake/find/FindSphinx.cmake
-# https://github.com/eclipse/upm/blob/master/cmake/modules/FindSphinx.cmake
+# Distributed under the OSI-approved BSD 3-Clause License.
+# See accompanying file LICENSE.txt for details.
 
 #[=======================================================================[.rst:
 FindSphinx
