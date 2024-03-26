@@ -556,7 +556,7 @@ function(set_json_value_by_dot_notation)
         endif()
     endforeach()
     #
-    #
+    # Split the dot notation path and collect property names and JSON fragments.
     #
     set(NAME_STACK)
     set(JSON_STACK)
@@ -579,7 +579,7 @@ function(set_json_value_by_dot_notation)
         message(FATAL_ERROR "'${ARGS_IN_DOT_NOTATION}' has a wrong format.")
     endif()
     #
-    #
+    # Update the value at the specified path by reversing through the property names and JSON fragments.
     #
     set(CUR_NAME)
     set(CUR_JSON)
@@ -591,7 +591,7 @@ function(set_json_value_by_dot_notation)
         set(CUR_VALUE ${CUR_JSON})
     endwhile()
     #
-    # Return the Content of ${CUR_JSON} to OUT_JSON_OBJECT
+    # Return the Content of ${CUR_JSON} to OUT_JSON_OBJECT.
     #
     set(${ARGS_OUT_JSON_OBJECT} ${CUR_JSON} PARENT_SCOPE)
 endfunction()
