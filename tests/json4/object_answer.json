@@ -1,0 +1,15 @@
+{
+  "po" : 
+  {
+    "zh_TW" : 
+    {
+      "tag" : "TEST4"
+    }
+  },
+  "pot" : 
+  {
+    "tag" : "v3.29.0-rc4"
+  },
+  "type" : "tag",
+  "version" : "latest"
+}

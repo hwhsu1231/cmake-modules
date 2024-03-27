@@ -533,9 +533,10 @@ function(set_json_value_by_dot_notation)
     # Parse arguments.
     #
     set(DOT_OPTIONS)
-    set(DOT_ONE_VALUE_ARGS      IN_JSON_OBJECT 
+    set(DOT_ONE_VALUE_ARGS      ERROR_VARIABLE
+                                IN_JSON_OBJECT 
                                 IN_DOT_NOTATION 
-                                IN_VALUE 
+                                IN_JSON_VALUE 
                                 OUT_JSON_OBJECT)
     set(DOT_MULTI_VALUE_ARGS)
     cmake_parse_arguments(ARGS 
@@ -548,51 +549,114 @@ function(set_json_value_by_dot_notation)
     #
     set(REQUIRED_ARGS           IN_JSON_OBJECT 
                                 IN_DOT_NOTATION
-                                IN_VALUE 
+                                IN_JSON_VALUE 
                                 OUT_JSON_OBJECT)
     foreach(_ARG ${REQUIRED_ARGS})
         if(NOT DEFINED ARGS_${_ARG})
             message(FATAL_ERROR "Missing ARGS_${_ARG} argument.")
         endif()
     endforeach()
+    unset(_ARG)
+    #
+    # Ensure all required arguments are provided.
+    #
+    if(ARGS_IN_DOT_NOTATION MATCHES "^\\.")
+        string(SUBSTRING ${ARGS_IN_DOT_NOTATION} 1 -1 ARGS_IN_DOT_NOTATION_NO_1ST_DOT)
+    else()
+        #
+        # Return the error message to ERROR_VARIABLE if ERROR_VARIABLE is provided.
+        # Print the error message as a fatal error if ERROR_VARIABLE is not provided.
+        #
+        set(ERROR_MESSAGE "Dot Notation must start with a '.' (${ARGS_IN_DOT_NOTATION})")
+        if(DEFINED ARGS_ERROR_VARIABLE)
+            set(${ARGS_ERROR_VARIABLE} "${ERROR_MESSAGE}" PARENT_SCOPE)
+            return()
+        else()
+            message(FATAL_ERROR "${ERROR_MESSAGE}")
+        endif()
+    endif()
     #
     # Split the dot notation path and collect property names and JSON fragments.
     #
     set(NAME_STACK)
     set(JSON_STACK)
-    set(CUR_PATH ${ARGS_IN_DOT_NOTATION})
+    set(CUR_NAME)
+    set(CUR_PATH ${ARGS_IN_DOT_NOTATION_NO_1ST_DOT})
     set(CUR_JSON ${ARGS_IN_JSON_OBJECT})
-    list(APPEND JSON_STACK ${CUR_JSON})
+    # https://discourse.cmake.org/t/checking-for-empty-string-doesnt-work-as-expected/3639/4
+    if (NOT "${CUR_PATH}" STREQUAL "")
+        list(APPEND JSON_STACK ${CUR_JSON})
+    endif()
     while(CUR_PATH MATCHES "\\.")
         string(FIND "${CUR_PATH}" "." DOT_POS)
-        string(SUBSTRING "${CUR_PATH}" 0 ${DOT_POS} PROP_NAME)
         math(EXPR DOT_NEXT_POS "${DOT_POS} + 1")
-        string(SUBSTRING "${CUR_PATH}" ${DOT_NEXT_POS} -1 CUR_PATH)
-        string(JSON CUR_JSON GET ${CUR_JSON} "${PROP_NAME}")
-        list(APPEND NAME_STACK ${PROP_NAME})
+        string(SUBSTRING "${CUR_PATH}" 0 ${DOT_POS}       CUR_NAME)
+        string(SUBSTRING "${CUR_PATH}" ${DOT_NEXT_POS} -1 CUR_PATH)        
+        string(JSON CUR_JSON ERROR_VARIABLE ERR_VAR GET ${CUR_JSON} "${CUR_NAME}")
+        if(CUR_JSON MATCHES "NOTFOUND$")
+            #
+            # Return the error message to ERROR_VARIABLE if ERROR_VARIABLE is provided.
+            # Print the error message as a fatal error if ERROR_VARIABLE is not provided.
+            #
+            set(ERROR_MESSAGE "${ERR_VAR} (${ARGS_IN_DOT_NOTATION})")
+            if(DEFINED ARGS_ERROR_VARIABLE)
+                set(${ARGS_ERROR_VARIABLE} "${ERROR_MESSAGE}" PARENT_SCOPE)
+                return()
+            else()
+                message(FATAL_ERROR "${ERROR_MESSAGE}")
+            endif()
+        endif()
+        list(APPEND NAME_STACK ${CUR_NAME})
         list(APPEND JSON_STACK ${CUR_JSON})
     endwhile()
-    if(NOT CUR_PATH STREQUAL "")
-        set(PROP_NAME "${CUR_PATH}")
-        list(APPEND NAME_STACK ${PROP_NAME})
+    # https://discourse.cmake.org/t/checking-for-empty-string-doesnt-work-as-expected/3639/4
+    if ("${CUR_NAME}" STREQUAL "" AND "${CUR_PATH}" STREQUAL "")
+        #
+        # If the dot notation is '.', 
+        # then no post-processing is needed after the while loop is executed.
+        #
     else()
-        message(FATAL_ERROR "'${ARGS_IN_DOT_NOTATION}' has a wrong format.")
+        #
+        # If the dot notation is the correct syntax of '.xxx.yyy.zzz', 
+        # then push the CUR_PATH at the end of the while loop into NAME_STACK as CUR_NAME.
+        #
+        set(CUR_NAME "${CUR_PATH}")
+        set(CUR_PATH)
+        string(JSON CUR_JSON ERROR_VARIABLE ERR_VAR GET ${CUR_JSON} "${CUR_NAME}")
+        if(CUR_JSON MATCHES "NOTFOUND$")
+            #
+            # Return the error message to ERROR_VARIABLE if ERROR_VARIABLE is provided.
+            # Print the error message as a fatal error if ERROR_VARIABLE is not provided.
+            #
+            set(ERROR_MESSAGE "${ERR_VAR} (${ARGS_IN_DOT_NOTATION})")
+            if(DEFINED ARGS_ERROR_VARIABLE)
+                set(${ARGS_ERROR_VARIABLE} "${ERROR_MESSAGE}" PARENT_SCOPE)
+                return()
+            else()
+                message(FATAL_ERROR "${ERROR_MESSAGE}")
+            endif()
+        endif()
+        list(APPEND NAME_STACK ${CUR_NAME})
     endif()
     #
     # Update the value at the specified path by reversing through the property names and JSON fragments.
     #
     set(CUR_NAME)
     set(CUR_JSON)
-    set(CUR_VALUE ${ARGS_IN_VALUE})
+    set(CUR_VALUE ${ARGS_IN_JSON_VALUE})
     while(JSON_STACK)
         list(POP_BACK NAME_STACK CUR_NAME)
         list(POP_BACK JSON_STACK CUR_JSON)
         string(JSON CUR_JSON SET ${CUR_JSON} "${CUR_NAME}" "${CUR_VALUE}")
         set(CUR_VALUE ${CUR_JSON})
     endwhile()
+    if(NOT CUR_JSON)
+        set(CUR_JSON ${CUR_VALUE})
+    endif()
     #
     # Return the Content of ${CUR_JSON} to OUT_JSON_OBJECT.
     #
+    set(${ARGS_ERROR_VARIABLE} "NOTFOUND" PARENT_SCOPE)
     set(${ARGS_OUT_JSON_OBJECT} ${CUR_JSON} PARENT_SCOPE)
 endfunction()
 
@@ -604,9 +668,10 @@ function(get_json_value_by_dot_notation)
     # Parse arguments.
     #
     set(DOT_OPTIONS)
-    set(DOT_ONE_VALUE_ARGS      IN_JSON_OBJECT 
+    set(DOT_ONE_VALUE_ARGS      ERROR_VARIABLE
+                                IN_JSON_OBJECT 
                                 IN_DOT_NOTATION 
-                                OUT_VALUE)
+                                OUT_JSON_VALUE)
     set(DOT_MULTI_VALUE_ARGS)
     cmake_parse_arguments(ARGS 
         "${DOT_OPTIONS}" 
@@ -618,7 +683,7 @@ function(get_json_value_by_dot_notation)
     #
     set(REQUIRED_ARGS           IN_JSON_OBJECT 
                                 IN_DOT_NOTATION 
-                                OUT_VALUE)
+                                OUT_JSON_VALUE)
     foreach(_ARG ${REQUIRED_ARGS})
         if(NOT DEFINED ARGS_${_ARG})
             message(FATAL_ERROR "Missing ARGS_${_ARG} argument.")
@@ -626,26 +691,81 @@ function(get_json_value_by_dot_notation)
     endforeach()
     unset(_ARG)
     #
+    # Validate the IN_DOT_NOTATION argument.
+    #
+    if(ARGS_IN_DOT_NOTATION MATCHES "^\\.")
+        string(SUBSTRING ${ARGS_IN_DOT_NOTATION} 1 -1 ARGS_IN_DOT_NOTATION_NO_1ST_DOT)
+    else()
+        #
+        # Return the error message to ERROR_VARIABLE if ERROR_VARIABLE is provided.
+        # Print the error message as a fatal error if ERROR_VARIABLE is not provided.
+        #
+        set(ERROR_MESSAGE "Dot Notation must start with a '.' (${ARGS_IN_DOT_NOTATION})")
+        if(DEFINED ARGS_ERROR_VARIABLE)
+            set(${ARGS_ERROR_VARIABLE} "${ERROR_MESSAGE}" PARENT_SCOPE)
+            return()
+        else()
+            message(FATAL_ERROR "${ERROR_MESSAGE}")
+        endif()
+    endif()
+    #
     # Navigate through the JSON object using the dot notation to find the desired value.
     # Split the dot notation at each dot to traverse nested objects.
     #
-    set(CUR_PATH ${ARGS_IN_DOT_NOTATION})
+    set(CUR_NAME)
+    set(CUR_PATH ${ARGS_IN_DOT_NOTATION_NO_1ST_DOT})
     set(CUR_JSON ${ARGS_IN_JSON_OBJECT})
     while(CUR_PATH MATCHES "\\.")
         string(FIND "${CUR_PATH}" "." DOT_POS)
-        string(SUBSTRING "${CUR_PATH}" 0 ${DOT_POS} PROP_NAME)
-        string(JSON CUR_JSON GET ${CUR_JSON} "${PROP_NAME}")
         math(EXPR DOT_NEXT_POS "${DOT_POS} + 1")
+        string(SUBSTRING "${CUR_PATH}" 0 ${DOT_POS}       CUR_NAME)
         string(SUBSTRING "${CUR_PATH}" ${DOT_NEXT_POS} -1 CUR_PATH)
+        string(JSON CUR_JSON ERROR_VARIABLE ERR_VAR GET ${CUR_JSON} "${CUR_NAME}")
+        if(CUR_JSON MATCHES "NOTFOUND$")
+            #
+            # Return the error message to ERROR_VARIABLE if ERROR_VARIABLE is provided.
+            # Print the error message as a fatal error if ERROR_VARIABLE is not provided.
+            #
+            set(ERROR_MESSAGE "${ERR_VAR} (${ARGS_IN_DOT_NOTATION})")
+            if(DEFINED ARGS_ERROR_VARIABLE)
+                set(${ARGS_ERROR_VARIABLE} "${ERROR_MESSAGE}" PARENT_SCOPE)
+                return()
+            else()
+                message(FATAL_ERROR "${ERROR_MESSAGE}")
+            endif()
+        endif()
     endwhile()
-    if(NOT CUR_PATH STREQUAL "")
-        set(PROP_NAME "${CUR_PATH}")
-        string(JSON CUR_JSON GET ${CUR_JSON} "${PROP_NAME}")
+    # https://discourse.cmake.org/t/checking-for-empty-string-doesnt-work-as-expected/3639/4
+    if ("${CUR_NAME}" STREQUAL "" AND "${CUR_PATH}" STREQUAL "")
+        #
+        # If the dot notation is '.', 
+        # then no post-processing is needed after the while loop is executed.
+        #
     else()
-        message(FATAL_ERROR "${ARGS_IN_DOT_NOTATION} has a wrong format.")
+        #
+        # If the dot notation is the correct syntax of '.xxx.yyy.zzz', 
+        # then push the CUR_PATH at the end of the while loop into NAME_STACK as CUR_NAME.
+        #
+        set(CUR_NAME "${CUR_PATH}")
+        set(CUR_PATH)
+        string(JSON CUR_JSON ERROR_VARIABLE ERR_VAR GET ${CUR_JSON} "${CUR_NAME}")
+        if(CUR_JSON MATCHES "NOTFOUND$")
+            #
+            # Return the error message to ERROR_VARIABLE if ERROR_VARIABLE is provided.
+            # Print the error message as a fatal error if ERROR_VARIABLE is not provided.
+            #
+            set(ERROR_MESSAGE "${ERR_VAR} (${ARGS_IN_DOT_NOTATION})")
+            if(DEFINED ARGS_ERROR_VARIABLE)
+                set(${ARGS_ERROR_VARIABLE} "${ERROR_MESSAGE}" PARENT_SCOPE)
+                return()
+            else()
+                message(FATAL_ERROR "${ERROR_MESSAGE}")
+            endif()
+        endif()
     endif()
     #
     # Assign the final value found using the dot notation to the output variable.
     #
-    set(${ARGS_OUT_VALUE} ${CUR_JSON} PARENT_SCOPE)
+    set(${ARGS_ERROR_VARIABLE} "NOTFOUND" PARENT_SCOPE)
+    set(${ARGS_OUT_JSON_VALUE} ${CUR_JSON} PARENT_SCOPE)
 endfunction()
