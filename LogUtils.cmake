@@ -1,4 +1,5 @@
-
+# Distributed under the OSI-approved BSD 3-Clause License.
+# See accompanying file LICENSE.txt for details.
 
 # macro(remove_cmake_message_indent)
 #     execute_process(COMMAND ${CMAKE_COMMAND} -E sleep 2.0)
