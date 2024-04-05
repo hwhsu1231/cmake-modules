@@ -2,30 +2,30 @@
 # See accompanying file LICENSE.txt for details.
 
 #[============================================================[.rst
-JsonUtilities
--------------
+JsonUtils
+---------
 
-Create version.json file
-^^^^^^^^^^^^^^^^^^^^^^^^
+Initialize a reference.json file
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. command:: init_version_json_file
+.. command:: init_reference_json_file
 
-  Create `version.json` file of `branch` type:
+  Initialize a `reference.json` file of `branch` type:
 
   .. code-block:: cmake
 
-    init_version_json_file(
-        IN_FILEPATH  "${CMAKE_CURRENT_LIST_DIR}/version.json"
+    init_reference_json_file(
+        IN_FILEPATH  "${CMAKE_CURRENT_LIST_DIR}/reference.json"
         IN_LANGUAGES "zh_CN;zh_TW"
         IN_TYPE      "branch"
         IN_VERSION   "master")
 
-  Create `version.json` file of `tag` type:
+  Initialize a `reference.json` file of `tag` type:
 
   .. code-block:: cmake
 
-    init_version_json_file(
-        IN_FILEPATH  "${CMAKE_CURRENT_LIST_DIR}/version.json"
+    init_reference_json_file(
+        IN_FILEPATH  "${CMAKE_CURRENT_LIST_DIR}/reference.json"
         IN_LANGUAGES "zh_CN;zh_TW"
         IN_TYPE      "tag"
         IN_VERSION   "master")
@@ -98,9 +98,9 @@ Dot Notation Setter/Getter
 #]============================================================]
 
 #
-# Initialize a version.json file
+# Initialize a reference.json file
 #
-function(init_version_json_file)
+function(init_reference_json_file)
     #
     # Parse arguments.
     #
