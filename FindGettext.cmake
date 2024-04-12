@@ -129,17 +129,6 @@ Hints
 
 set(_MODULE "${CMAKE_FIND_PACKAGE_NAME}")
 
-# message("_MODULE = Gettext")
-# message("Gettext_FIND_COMPONENTS         = ${Gettext_FIND_COMPONENTS}")
-# message("Gettext_FIND_QUIETLY            = ${Gettext_FIND_QUIETLY}")
-# message("Gettext_FIND_REQUIRED           = ${Gettext_FIND_REQUIRED}")
-# message("Gettext_FIND_REQUIRED_Xgettext  = ${Gettext_FIND_REQUIRED_Xgettext}")
-# message("Gettext_FIND_REQUIRED_Msgfmt    = ${Gettext_FIND_REQUIRED_Msgfmt}")
-# foreach(_COMP IN LISTS Gettext_FIND_COMPONENTS)
-#     message("Gettext_FIND_REQUIRED_${_COMP} = ${Gettext_FIND_REQUIRED_${_COMP}}")
-# endforeach()
-# unset(_COMP)
-
 set(_Gettext_KNOWN_COMPONENTS
     Xgettext
     Msgattrib
@@ -157,10 +146,6 @@ set(_Gettext_KNOWN_COMPONENTS
     Msguniq
     Msgunfmt)
 
-# if(NOT Gettext_FIND_COMPONENTS)
-#     set(Gettext_FIND_COMPONENTS Xgettext)
-#     set(Gettext_FIND_REQUIRED_Xgettext TRUE)
-# endif()
 if(NOT Gettext_FIND_COMPONENTS)
     set(Gettext_FIND_COMPONENTS ${_Gettext_KNOWN_COMPONENTS})
     foreach(_COMP ${_Gettext_KNOWN_COMPONENTS})
@@ -183,13 +168,8 @@ foreach(_COMP ${_Gettext_KNOWN_COMPONENTS})
     set(_TOOL "${_COMP_LOWER}")
     find_program(Gettext_${_COMP_UPPER}_EXECUTABLE
         NAMES ${_TOOL}
-        # NO_PACKAGE_ROOT_PATH            # 1st: paths in <PackageName>_ROOT cache/environment variables.
-        # NO_CMAKE_PATH                   # 2nd: paths in cmake-specific cache variables.
-        # NO_CMAKE_ENVIRONMENT_PATH       # 3rd: paths in cmake-specific environment variables.
-        HINTS ${_Gettext_SEARCH_HINTS}    # 4th: paths in HINTS option.
-        # NO_SYSTEM_ENVIRONMENT_PATH      # 5th: paths in standard system environment variables (PATH env).
-        # NO_CMAKE_SYSTEM_PATH            # 6th: paths in cmake variables defined in Platform files.
-        PATHS ${_Gettext_SEARCH_PATHS}    # 7th: paths in PATHS option.
+        HINTS ${_Gettext_SEARCH_HINTS}
+        PATHS ${_Gettext_SEARCH_PATHS}
         DOC "The full path to the ${_TOOL} executable.")
     if(Gettext_${_COMP_UPPER}_EXECUTABLE)
         set(Gettext_${_COMP}_FOUND TRUE)
@@ -231,7 +211,7 @@ find_package_handle_standard_args(Gettext
         Gettext_VERSION
     FOUND_VAR
         Gettext_FOUND
-    FAIL_MESSAGE
+    REASON_FAILURE_MESSAGE
         "Failed to find Gettext toolkit"
     HANDLE_COMPONENTS)
 
@@ -252,4 +232,8 @@ if(Gettext_FOUND)
             endif()
         endforeach()
     endif()
+    unset(_Gettext_CMAKE_ROLE)
 endif()
+
+unset(_Gettext_SEARCH_HINTS)
+unset(_Gettext_SEARCH_PATHS)
