@@ -115,3 +115,6 @@ if(Crowdin_FOUND)
     endif()
     unset(_Crowdin_CMAKE_ROLE)
 endif()
+
+unset(_Crowdin_SEARCH_HINTS)
+unset(_Crowdin_SEARCH_PATHS)
