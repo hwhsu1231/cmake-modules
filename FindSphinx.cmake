@@ -72,9 +72,7 @@ Hints
 
 #]=======================================================================]
 
-get_property(_Sphinx_CMAKE_ROLE GLOBAL PROPERTY CMAKE_ROLE)
-
-if(WIN32)
+if(CMAKE_HOST_WIN32)
     set(_Sphinx_PATH_SUFFIXES Scripts)
 else()
     set(_Sphinx_PATH_SUFFIXES bin)
@@ -143,11 +141,12 @@ find_package_handle_standard_args(Sphinx
         Sphinx_VERSION
     FOUND_VAR
         Sphinx_FOUND
-    # FAIL_MESSAGE
-    #     "Failed to locate sphinx-build executable."
+    REASON_FAILURE_MESSAGE
+        "Failed to locate sphinx-build executable."
     HANDLE_COMPONENTS)
 
 if(Sphinx_FOUND)
+    get_property(_Sphinx_CMAKE_ROLE GLOBAL PROPERTY CMAKE_ROLE)
     if(_Sphinx_CMAKE_ROLE STREQUAL "PROJECT")
         #
         # add_executable is not scriptable
@@ -163,6 +162,8 @@ if(Sphinx_FOUND)
             endif()
         endforeach()
     endif()
+    unset(_Sphinx_CMAKE_ROLE)
 endif()
 
-unset(_Sphinx_CMAKE_ROLE)
+unset(_Sphinx_SEARCH_HINTS)
+unset(_Sphinx_SEARCH_PATHS)
