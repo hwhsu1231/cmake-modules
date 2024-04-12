@@ -62,9 +62,6 @@ if(Git_EXECUTABLE)
         OUTPUT_VARIABLE _Git_VERSION_OUTPUT
         OUTPUT_STRIP_TRAILING_WHITESPACE)
 
-    # string(REGEX MATCH "([0-9]+)\\.([0-9]+)\\.([0-9]+)" _ ${_Git_VERSION_OUTPUT})
-    # string(REGEX MATCH "[0-9]+\\.[0-9]+\\.[0-9]+([-\\.][a-zA-Z0-9]+)?" 
-    #     Git_VERSION ${_Git_VERSION_OUTPUT})
     string(REGEX MATCH "[0-9]+\\.[0-9]+\\.[0-9]+([-\\.][a-zA-Z0-9]+)*" 
         Git_VERSION ${_Git_VERSION_OUTPUT})
 
@@ -86,7 +83,7 @@ find_package_handle_standard_args(Git
         Git_VERSION
     FOUND_VAR
         Git_FOUND
-    FAIL_MESSAGE
+    REASON_FAILURE_MESSAGE
         "Failed to find the git executable.")
 
 if(Git_FOUND)
