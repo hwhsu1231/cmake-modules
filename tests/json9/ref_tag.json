@@ -1,0 +1,23 @@
+{
+  "po" : 
+  {
+    "ja" : 
+    {
+      "tag" : ""
+    },
+    "zh_CN" : 
+    {
+      "tag" : ""
+    },
+    "zh_TW" : 
+    {
+      "tag" : ""
+    }
+  },
+  "pot" : 
+  {
+    "tag" : ""
+  },
+  "type" : "tag",
+  "version" : "master"
+}
