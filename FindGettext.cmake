@@ -127,8 +127,6 @@ Hints
 
 #]=======================================================================]
 
-set(_MODULE "${CMAKE_FIND_PACKAGE_NAME}")
-
 set(_Gettext_KNOWN_COMPONENTS
     Xgettext
     Msgattrib
@@ -148,7 +146,7 @@ set(_Gettext_KNOWN_COMPONENTS
 
 if(NOT Gettext_FIND_COMPONENTS)
     set(Gettext_FIND_COMPONENTS ${_Gettext_KNOWN_COMPONENTS})
-    foreach(_COMP ${_Gettext_KNOWN_COMPONENTS})
+    foreach(_COMP ${Gettext_FIND_COMPONENTS})
         set(Gettext_FIND_REQUIRED_${_COMP} TRUE)
     endforeach()
     unset(_COMP)
@@ -173,23 +171,25 @@ foreach(_COMP ${_Gettext_KNOWN_COMPONENTS})
         DOC "The full path to the ${_TOOL} executable.")
     if(Gettext_${_COMP_UPPER}_EXECUTABLE)
         set(Gettext_${_COMP}_FOUND TRUE)
-    endif()
-endforeach()
-unset(_COMP)
-
-foreach(_COMP IN LISTS Gettext_FIND_COMPONENTS)
-    string(TOUPPER "${_COMP}" _COMP_UPPER)
-    if(EXISTS "${Gettext_${_COMP_UPPER}_EXECUTABLE}")
-        set(Gettext_${_COMP}_FOUND TRUE)
     else()
         set(Gettext_${_COMP}_FOUND FALSE)
     endif()
 endforeach()
 unset(_COMP)
 
+# foreach(_COMP IN LISTS Gettext_FIND_COMPONENTS)
+#     string(TOUPPER "${_COMP}" _COMP_UPPER)
+#     if(Gettext_${_COMP_UPPER}_EXECUTABLE)
+#         set(Gettext_${_COMP}_FOUND TRUE)
+#     else()
+#         set(Gettext_${_COMP}_FOUND FALSE)
+#     endif()
+# endforeach()
+# unset(_COMP)
+
 if(Gettext_XGETTEXT_EXECUTABLE)
     execute_process(
-        COMMAND "${Gettext_XGETTEXT_EXECUTABLE}" --version
+        COMMAND ${Gettext_XGETTEXT_EXECUTABLE} --version
         OUTPUT_VARIABLE _XGETTEXT_VERSION_OUTPUT
         OUTPUT_STRIP_TRAILING_WHITESPACE)
 
@@ -205,14 +205,11 @@ endif()
 # this will also set SPHINX_FOUND to true if Gettext_XGETTEXT_EXECUTABLE exists
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(Gettext
-    REQUIRED_VARS
-        Gettext_XGETTEXT_EXECUTABLE
     VERSION_VAR
         Gettext_VERSION
     FOUND_VAR
         Gettext_FOUND
-    REASON_FAILURE_MESSAGE
-        "Failed to find Gettext toolkit"
+    HANDLE_VERSION_RANGE
     HANDLE_COMPONENTS)
 
 if(Gettext_FOUND)
@@ -235,5 +232,6 @@ if(Gettext_FOUND)
     unset(_Gettext_CMAKE_ROLE)
 endif()
 
+unset(_Gettext_KNOWN_COMPONENTS)
 unset(_Gettext_SEARCH_HINTS)
 unset(_Gettext_SEARCH_PATHS)

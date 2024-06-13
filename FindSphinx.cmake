@@ -99,6 +99,8 @@ set(_Sphinx_SEARCH_HINTS
 
 set(_Sphinx_SEARCH_PATHS)
 
+set(_Sphinx_FAILURE_REASON)
+
 foreach(_COMP ${_Sphinx_KNOWN_COMPONENTS})
     string(TOLOWER ${_COMP} _COMP_LOWER)
     string(TOUPPER ${_COMP} _COMP_UPPER)
@@ -109,21 +111,34 @@ foreach(_COMP ${_Sphinx_KNOWN_COMPONENTS})
         PATH_SUFFIXES ${_Sphinx_PATH_SUFFIXES}
         HINTS ${_Sphinx_SEARCH_HINTS}
         PATHS ${_Sphinx_SEARCH_PATHS}
-        DOC "The full path to the ${_TOOL} executable.")
+        DOC "The full path to the '${_TOOL}' executable.")
     if(Sphinx_${_COMP_UPPER}_EXECUTABLE)
         set(Sphinx_${_COMP}_FOUND TRUE)
+    else()
+        set(Sphinx_${_COMP}_FOUND FALSE)
+    endif()
+endforeach()
+unset(_COMP)
+
+foreach(_COMP IN LISTS Sphinx_FIND_COMPONENTS)
+    string(TOUPPER "${_COMP}" _COMP_UPPER)
+    if(Sphinx_${_COMP_UPPER}_EXECUTABLE)
+        set(Sphinx_${_COMP}_FOUND TRUE)
+    else()
+        set(Sphinx_${_COMP}_FOUND FALSE)
     endif()
 endforeach()
 unset(_COMP)
 
 if(Sphinx_BUILD_EXECUTABLE)
     execute_process(
-        COMMAND "${Sphinx_BUILD_EXECUTABLE}" --version
+        COMMAND ${Sphinx_BUILD_EXECUTABLE} --version
         OUTPUT_VARIABLE _Sphinx_VERSION_OUTPUT
         OUTPUT_STRIP_TRAILING_WHITESPACE)
 
     string(REGEX MATCH "([0-9]+\\.[0-9]+\\.[0-9]+)" 
         Sphinx_VERSION ${_Sphinx_VERSION_OUTPUT})
+    unset(_Sphinx_VERSION_OUTPUT)
 
     string(REGEX MATCH "([0-9]+)\\.([0-9]+)\\.([0-9]+)" _ ${Sphinx_VERSION})
     set(Sphinx_VERSION_MAJOR "${CMAKE_MATCH_1}")
@@ -137,19 +152,19 @@ include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(Sphinx
     REQUIRED_VARS
         Sphinx_BUILD_EXECUTABLE
+    HANDLE_COMPONENTS
+    # REASON_FAILURE_MESSAGE
+    #     "${_Sphinx_FAILURE_REASON}"
     VERSION_VAR
         Sphinx_VERSION
     FOUND_VAR
-        Sphinx_FOUND
-    REASON_FAILURE_MESSAGE
-        "Failed to locate sphinx-build executable."
-    HANDLE_COMPONENTS)
+        Sphinx_FOUND)
 
 if(Sphinx_FOUND)
     get_property(_Sphinx_CMAKE_ROLE GLOBAL PROPERTY CMAKE_ROLE)
     if(_Sphinx_CMAKE_ROLE STREQUAL "PROJECT")
         #
-        # add_executable is not scriptable
+        # add_executable is not scriptable.
         #
         foreach(_COMP ${Sphinx_FIND_COMPONENTS})
             string(TOUPPER ${_COMP} _COMP_UPPER)
@@ -165,5 +180,8 @@ if(Sphinx_FOUND)
     unset(_Sphinx_CMAKE_ROLE)
 endif()
 
+unset(_Sphinx_PATH_SUFFIXES)
+unset(_Sphinx_KNOWN_COMPONENTS)
 unset(_Sphinx_SEARCH_HINTS)
 unset(_Sphinx_SEARCH_PATHS)
+unset(_Sphinx_FAILURE_REASON)

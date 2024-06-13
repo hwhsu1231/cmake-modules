@@ -83,8 +83,7 @@ find_package_handle_standard_args(Git
         Git_VERSION
     FOUND_VAR
         Git_FOUND
-    REASON_FAILURE_MESSAGE
-        "Failed to find the git executable.")
+    HANDLE_VERSION_RANGE)
 
 if(Git_FOUND)
     get_property(_Git_CMAKE_ROLE GLOBAL PROPERTY CMAKE_ROLE)
