@@ -8,27 +8,51 @@ JsonUtils
 Initialize a reference.json file
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. command:: init_reference_json_file
+.. command:: init_references_json_file
 
-  Initialize a `reference.json` file of `branch` type:
-
-  .. code-block:: cmake
-
-    init_reference_json_file(
-        IN_FILEPATH  "${CMAKE_CURRENT_LIST_DIR}/reference.json"
-        IN_LANGUAGES "zh_CN;zh_TW"
-        IN_TYPE      "branch"
-        IN_VERSION   "master")
-
-  Initialize a `reference.json` file of `tag` type:
+  Initialize a `reference.json` file of `branch` type in `language` mode:
 
   .. code-block:: cmake
 
-    init_reference_json_file(
-        IN_FILEPATH  "${CMAKE_CURRENT_LIST_DIR}/reference.json"
-        IN_LANGUAGES "zh_CN;zh_TW"
-        IN_TYPE      "tag"
-        IN_VERSION   "master")
+    init_references_json_file(
+        IN_FILEPATH   "${CMAKE_CURRENT_LIST_DIR}/reference.json"
+        IN_VERSION    "git-master"
+        IN_TYPE       "branch"
+        IN_MODE       "language"
+        IN_LANGUAGE   "zh_CN;zh_TW")
+
+  Initialize a `reference.json` file of `tag` type in `language` mode:
+
+  .. code-block:: cmake
+
+    init_references_json_file(
+        IN_FILEPATH   "${CMAKE_CURRENT_LIST_DIR}/reference.json"
+        IN_VERSION    "git-master"
+        IN_TYPE       "tag"
+        IN_MODE       "language"
+        IN_LANGUAGE   "zh_CN;zh_TW")
+
+  Initialize a `reference.json` file of `branch` type in `repository` mode:
+
+  .. code-block:: cmake
+
+    init_references_json_file(
+        IN_FILEPATH   "${CMAKE_CURRENT_LIST_DIR}/reference.json"
+        IN_VERSION    "git-master"
+        IN_TYPE       "branch"
+        IN_MODE       "language"
+        IN_LANGUAGE   "conan")
+
+  Initialize a `reference.json` file of `tag` type in `repository` mode:
+
+  .. code-block:: cmake
+
+    init_references_json_file(
+        IN_FILEPATH   "${CMAKE_CURRENT_LIST_DIR}/reference.json"
+        IN_VERSION    "git-master"
+        IN_TYPE       "tag"
+        IN_MODE       "repository"
+        IN_LANGUAGE   "conan")
 
 Get Members of Json Object
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -46,18 +70,18 @@ Get Members of Json Object
 Set Members of Json Object for language and commit
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. command:: set_members_of_language_json_object
+.. command:: set_members_of_reference_json_object
 
   .. code-block:: cmake
 
-    set_members_of_language_json_object(
+    set_members_of_reference_json_object(
         IN_TYPE           "tag"
         IN_MEMBER_TAG     "\"${repo_latest_tag}\""
         OUT_JSON_OBJECT   LANGUAGE_CNT)
 
   .. code-block:: cmake
 
-    set_members_of_language_json_object(
+    set_members_of_reference_json_object(
         IN_TYPE           "branch"
         IN_MEMBER_BRANCH  "\"${IN_VERSION}\""
         IN_MEMBER_COMMIT  "${COMMIT_CNT}"
@@ -98,7 +122,100 @@ Dot Notation Setter/Getter
 #]============================================================]
 
 
-macro(_init_reference_json_file_for_tag)
+#
+# Initialize a reference.json file
+#
+function(init_references_json_file)
+    #
+    # Parse arguments.
+    #
+    set(OPTIONS)
+    set(ONE_VALUE_ARGS    IN_FILEPATH
+                          IN_VERSION
+                          IN_TYPE 
+                          IN_MODE)
+    set(MULTI_VALUE_ARGS  IN_LANGUAGE
+                          IN_REPOSITORY)
+    cmake_parse_arguments(IRJF
+        "${OPTIONS}" 
+        "${ONE_VALUE_ARGS}" 
+        "${MULTI_VALUE_ARGS}" 
+        ${ARGN})
+    #
+    # Ensure all required arguments are provided.
+    #
+    if(IRJF_IN_MODE STREQUAL "language")
+        set(REQUIRED_ARGS   IN_FILEPATH
+                            IN_VERSION
+                            IN_TYPE 
+                            IN_MODE
+                            IN_LANGUAGE)
+    elseif(IRJF_IN_MODE STREQUAL "repository")
+        set(REQUIRED_ARGS   IN_FILEPATH
+                            IN_VERSION
+                            IN_TYPE
+                            IN_MODE
+                            IN_REPOSITORY)
+    else()
+        message(FATAL_ERROR "Missing/Invalid IRJF_${_ARG} argument.")
+    endif()
+    foreach(_ARG ${REQUIRED_ARGS})
+        if(NOT DEFINED IRJF_${_ARG})
+            message(FATAL_ERROR "Missing IRJF_${_ARG} argument.")
+        endif()
+    endforeach()
+    unset(_ARG)
+    #
+    # Initialize or create the JSON file at specified ${IRJF_IN_FILEPATH}.
+    #
+    set(_FILEPATH "${IRJF_IN_FILEPATH}")
+    if(NOT EXISTS "${_FILEPATH}")
+        get_filename_component(_FILEPATH_DIR "${_FILEPATH}" DIRECTORY)
+        file(MAKE_DIRECTORY "${_FILEPATH_DIR}")
+        file(TOUCH "${_FILEPATH}")
+    endif()
+    file(READ "${_FILEPATH}" JSON_CNT)
+    if(NOT JSON_CNT)
+        set(JSON_CNT "{}")
+    endif()
+    #
+    # Initialize 'version' property based on ${IRJF_IN_VERSION}.
+    #
+    string(JSON JSON_CNT SET ${JSON_CNT} "version" "\"${IRJF_IN_VERSION}\"")
+    #
+    # Initialize 'type' property based on ${IRJF_IN_TYPE}.
+    #
+    string(JSON JSON_CNT SET ${JSON_CNT} "type" "\"${IRJF_IN_TYPE}\"")
+    #
+    #
+    #
+    if(IRJF_IN_TYPE STREQUAL "tag")
+        if(IRJF_IN_MODE STREQUAL "language")
+            _init_reference_json_file_for_tag_language()
+        elseif(IRJF_IN_MODE STREQUAL "repository")
+            _init_reference_json_file_for_tag_repository()
+        else()
+            message(FATAL_ERROR "Invalid IRJF_IN_MODE argument. (${IRJF_IN_MODE})")
+        endif()
+    elseif(IRJF_IN_TYPE STREQUAL "branch")
+        if(IRJF_IN_MODE STREQUAL "language")
+            _init_reference_json_file_for_branch_language()
+        elseif(IRJF_IN_MODE STREQUAL "repository")
+            _init_reference_json_file_for_branch_repository()
+        else()
+            message(FATAL_ERROR "Invalid IRJF_IN_MODE argument. (${IRJF_IN_MODE})")
+        endif()
+    else()
+        message(FATAL_ERROR "Invalid IRJF_IN_TYPE argument. (${IRJF_IN_TYPE})")
+    endif()
+    #
+    # Write the content of ${JSON_CNT} into ${_FILEPATH}.
+    #
+    file(WRITE "${_FILEPATH}" ${JSON_CNT})
+endfunction()
+
+
+macro(_init_reference_json_file_for_tag_language)
     #
     # For 'tag' type:
     # (1)   Initialize 'pot' property as empty if missing.
@@ -107,7 +224,7 @@ macro(_init_reference_json_file_for_tag)
     # (2.1) Initialize 'po.${_LANGUAGE}' objects as empty if missing.
     # (2.2) Initialize 'po.${_LANGUAGE}.${LANGUAGE_PROP_NAME}' property as empty if missing.
     #
-    set(LANGUAGE_LIST ${IRJF_IN_LANGUAGES})
+    set(LANGUAGE_LIST ${IRJF_IN_LANGUAGE})
     set(LANGUAGE_PROP_NAME_LIST tag)
     set(LANGUAGE_PROP_TYPE_LIST STRING)
     #
@@ -182,7 +299,51 @@ macro(_init_reference_json_file_for_tag)
 endmacro()
 
 
-macro(_init_reference_json_file_for_branch)
+macro(_init_reference_json_file_for_tag_repository)
+    #
+    # For 'tag' type:
+    # (1)   Initialize '${_REPOSITORY}' property as empty if missing.
+    # (1.1) Initialize '${_REPOSITORY}.${REPOSITORY_PROP_NAME}' property as empty if missing.
+    #
+    set(REPOSITORY_LIST ${IRJF_IN_REPOSITORY})
+    set(REPOSITORY_PROP_NAME_LIST tag)
+    set(REPOSITORY_PROP_TYPE_LIST STRING)
+    foreach(_REPOSITORY ${REPOSITORY_LIST})
+        #
+        # (1) Initialize '${_REPOSITORY}' property as empty if missing.
+        #
+        string(JSON ${_REPOSITORY}_CNT ERROR_VARIABLE ${_REPOSITORY}_ERR GET ${JSON_CNT} "${_REPOSITORY}")
+        if(NOT ${_REPOSITORY}_ERR STREQUAL "NOTFOUND")
+            set(${_REPOSITORY}_CNT "{}")
+            string(JSON JSON_CNT SET ${JSON_CNT} "${_REPOSITORY}" "${${_REPOSITORY}_CNT}")
+        endif()
+        list(LENGTH REPOSITORY_PROP_NAME_LIST REPOSITORY_PROP_NUM)
+        math(EXPR REPOSITORY_PROP_MAX_ID "${REPOSITORY_PROP_NUM} - 1")
+        foreach(_ID RANGE ${REPOSITORY_PROP_MAX_ID})
+            #
+            # (1.1) Initialize '${_REPOSITORY}.${REPOSITORY_PROP_NAME}' property as empty if missing.
+            #
+            list(GET REPOSITORY_PROP_NAME_LIST ${_ID} REPOSITORY_PROP_NAME)
+            list(GET REPOSITORY_PROP_TYPE_LIST ${_ID} REPOSITORY_PROP_TYPE)
+            string(JSON ${REPOSITORY_PROP_NAME}_CNT 
+                ERROR_VARIABLE ${REPOSITORY_PROP_NAME}_ERR 
+                GET ${${_REPOSITORY}_CNT} "${REPOSITORY_PROP_NAME}")
+            if(NOT ${REPOSITORY_PROP_NAME}_ERR STREQUAL "NOTFOUND")
+                if (REPOSITORY_PROP_TYPE STREQUAL "STRING")
+                    set(${REPOSITORY_PROP_NAME}_CNT "\"\"")
+                endif()
+                string(JSON ${_REPOSITORY}_CNT SET ${${_REPOSITORY}_CNT} 
+                    "${REPOSITORY_PROP_NAME}" "${${REPOSITORY_PROP_NAME}_CNT}")
+            endif()
+        endforeach()
+        unset(_ID)
+        string(JSON JSON_CNT SET ${JSON_CNT} "${_REPOSITORY}" "${${_REPOSITORY}_CNT}")
+    endforeach()
+    unset(_REPOSITORY)
+endmacro()
+
+
+macro(_init_reference_json_file_for_branch_language)
     #
     # For 'branch' type:
     # (1)   Initialize 'pot' property as empty if missing.
@@ -193,7 +354,7 @@ macro(_init_reference_json_file_for_branch)
     # (2.2) Initialize 'po.${_LANGUAGE}.${LANGUAGE_PROP_NAME}' property as empty if missing.
     # (2.3) Initialize 'po.${_LANGUAGE}.commit.${COMMIT_PROP_NAME}' property as empty if missing.
     #
-    set(LANGUAGE_LIST ${IRJF_IN_LANGUAGES})
+    set(LANGUAGE_LIST ${IRJF_IN_LANGUAGE})
     set(LANGUAGE_PROP_NAME_LIST branch commit)
     set(LANGUAGE_PROP_TYPE_LIST STRING OBJECT)
     set(COMMIT_PROP_NAME_LIST date hash title)
@@ -321,286 +482,79 @@ macro(_init_reference_json_file_for_branch)
 endmacro()
 
 
-#
-# Initialize a reference.json file
-#
-function(init_reference_json_file)
+macro(_init_reference_json_file_for_branch_repository)
     #
-    # Parse arguments.
+    # For 'branch' type:
+    # (1)   Initialize '${_REPOSITORY}' property as empty if missing.
+    # (1.1) Initialize '${_REPOSITORY}.${REPOSITORY_PROP_NAME}' property as empty if missing.
+    # (1.2) Initialize '${_REPOSITORY}.commit.${COMMIT_PROP_NAME}' property as empty if missing.
     #
-    set(OPTIONS)
-    set(ONE_VALUE_ARGS    IN_TYPE 
-                          IN_FILEPATH 
-                          IN_VERSION)
-    set(MULTI_VALUE_ARGS  IN_LANGUAGES)
-    cmake_parse_arguments(IRJF 
-        "${OPTIONS}" 
-        "${ONE_VALUE_ARGS}" 
-        "${MULTI_VALUE_ARGS}" 
-        ${ARGN})
-    #
-    # Ensure all required arguments are provided.
-    #
-    foreach(_ARG ${ONE_VALUE_ARGS})
-        if(NOT DEFINED IRJF_${_ARG})
-            message(FATAL_ERROR "Missing IRJF_${_ARG} argument.")
+    set(REPOSITORY_LIST ${IRJF_IN_REPOSITORY})
+    set(REPOSITORY_PROP_NAME_LIST branch commit)
+    set(REPOSITORY_PROP_TYPE_LIST STRING OBJECT)
+    set(COMMIT_PROP_NAME_LIST date hash title)
+    set(COMMIT_PROP_TYPE_LIST STRING STRING STRING)
+    foreach(_REPOSITORY ${REPOSITORY_LIST})
+        #
+        # (1) Initialize '${_REPOSITORY}' property as empty if missing.
+        #
+        string(JSON ${_REPOSITORY}_CNT ERROR_VARIABLE ${_REPOSITORY}_ERR GET ${JSON_CNT} "${_REPOSITORY}")
+        if(NOT ${_REPOSITORY}_ERR STREQUAL "NOTFOUND")
+            set(${_REPOSITORY}_CNT "{}")
+            string(JSON JSON_CNT SET ${JSON_CNT} "${_REPOSITORY}" "${${_REPOSITORY}_CNT}")
         endif()
+        list(LENGTH REPOSITORY_PROP_NAME_LIST REPOSITORY_PROP_NUM)
+        math(EXPR REPOSITORY_PROP_MAX_ID "${REPOSITORY_PROP_NUM} - 1")
+        foreach(REPOSITORY_PROP_ID RANGE ${REPOSITORY_PROP_MAX_ID})
+            #
+            # (1.1) Initialize '${_REPOSITORY}.${REPOSITORY_PROP_NAME}' property as empty if missing.
+            #
+            list(GET REPOSITORY_PROP_NAME_LIST ${REPOSITORY_PROP_ID} REPOSITORY_PROP_NAME)
+            list(GET REPOSITORY_PROP_TYPE_LIST ${REPOSITORY_PROP_ID} REPOSITORY_PROP_TYPE)
+            string(JSON ${REPOSITORY_PROP_NAME}_CNT 
+                ERROR_VARIABLE ${REPOSITORY_PROP_NAME}_ERR 
+                GET ${${_REPOSITORY}_CNT} "${REPOSITORY_PROP_NAME}")
+            if(NOT ${REPOSITORY_PROP_NAME}_ERR STREQUAL "NOTFOUND")
+                if (REPOSITORY_PROP_TYPE STREQUAL "STRING")
+                    set(${REPOSITORY_PROP_NAME}_CNT "\"\"")
+                elseif (REPOSITORY_PROP_TYPE STREQUAL "OBJECT")
+                    set(${REPOSITORY_PROP_NAME}_CNT "{}")
+                endif()
+                string(JSON ${_REPOSITORY}_CNT SET ${${_REPOSITORY}_CNT} "${REPOSITORY_PROP_NAME}" "${${REPOSITORY_PROP_NAME}_CNT}")
+            endif()
+            if(REPOSITORY_PROP_NAME STREQUAL "commit")
+                #
+                # (1.2) Initialize '${_REPOSITORY}.commit.${COMMIT_PROP_NAME}' property as empty if missing.
+                #
+                list(LENGTH COMMIT_PROP_NAME_LIST COMMIT_PROP_NUM)
+                math(EXPR COMMIT_PROP_MAX_ID "${COMMIT_PROP_NUM} - 1")
+                foreach(COMMIT_PROP_ID RANGE ${COMMIT_PROP_MAX_ID})
+                    list(GET COMMIT_PROP_NAME_LIST ${COMMIT_PROP_ID} COMMIT_PROP_NAME)
+                    list(GET COMMIT_PROP_TYPE_LIST ${COMMIT_PROP_ID} COMMIT_PROP_TYPE)
+                    string(JSON ${COMMIT_PROP_NAME}_CNT 
+                        ERROR_VARIABLE ${COMMIT_PROP_NAME}_ERR 
+                        GET ${commit_CNT} "${COMMIT_PROP_NAME}")
+                    if(NOT ${COMMIT_PROP_NAME}_ERR STREQUAL "NOTFOUND")
+                        if (COMMIT_PROP_TYPE STREQUAL "STRING")
+                            set(${COMMIT_PROP_NAME}_CNT "\"\"")
+                        elseif (COMMIT_PROP_TYPE STREQUAL "OBJECT")
+                            set(${COMMIT_PROP_NAME}_CNT "{}")
+                        endif()
+                        string(JSON commit_CNT SET ${commit_CNT} 
+                            "${COMMIT_PROP_NAME}" "${${COMMIT_PROP_NAME}_CNT}")
+                    endif()
+                endforeach()
+                string(JSON ${_REPOSITORY}_CNT SET ${${_REPOSITORY}_CNT} "commit" "${commit_CNT}")
+            endif()
+        endforeach()
+        unset(REPOSITORY_PROP_ID)
+        string(JSON JSON_CNT SET ${JSON_CNT} "${_REPOSITORY}" "${${_REPOSITORY}_CNT}")
     endforeach()
-    unset(_ARG)
-    #
-    # Initialize or create the JSON file at specified ${IRJF_IN_FILEPATH}.
-    #
-    set(_FILEPATH "${IRJF_IN_FILEPATH}")
-    if(NOT EXISTS "${_FILEPATH}")
-        get_filename_component(_FILEPATH_DIR "${_FILEPATH}" DIRECTORY)
-        file(MAKE_DIRECTORY "${_FILEPATH_DIR}")
-        file(TOUCH "${_FILEPATH}")
-    endif()
-    file(READ "${_FILEPATH}" JSON_CNT)
-    if(NOT JSON_CNT)
-        set(JSON_CNT "{}")
-    endif()
-    #
-    # Initialize 'version' property based on ${IRJF_IN_VERSION}.
-    #
-    string(JSON JSON_CNT SET ${JSON_CNT} "version" "\"${IRJF_IN_VERSION}\"")
-    #
-    # Initialize 'type' property based on ${IRJF_IN_TYPE}.
-    #
-    string(JSON JSON_CNT SET ${JSON_CNT} "type" "\"${IRJF_IN_TYPE}\"")
-    #
-    # Initialize 'pot' and 'po' properties based on ${IRJF_IN_TYPE}.
-    #
-    if(IRJF_IN_TYPE STREQUAL "tag")
-        _init_reference_json_file_for_tag()
-        # #
-        # # For 'tag' type:
-        # # (1)   Initialize 'pot' property as empty if missing.
-        # # (1.1) Initialize 'pot.${LANGUAGE_PROP_NAME}' property as empty if missing.
-        # # (2)   Initialize 'po' property as empty if missing.
-        # # (2.1) Initialize 'po.${_LANGUAGE}' objects as empty if missing.
-        # # (2.2) Initialize 'po.${_LANGUAGE}.${LANGUAGE_PROP_NAME}' property as empty if missing.
-        # #
-        # set(LANGUAGE_LIST ${IRJF_IN_LANGUAGES})
-        # set(LANGUAGE_PROP_NAME_LIST tag)
-        # set(LANGUAGE_PROP_TYPE_LIST STRING)
-        # #
-        # # (1) Initialize 'pot' property as empty if missing.
-        # #
-        # string(JSON pot_CNT ERROR_VARIABLE pot_ERR GET ${JSON_CNT} "pot")
-        # if(NOT pot_ERR STREQUAL "NOTFOUND")
-        #     set(pot_CNT "{}")
-        #     string(JSON JSON_CNT SET ${JSON_CNT} "pot" "${pot_CNT}")
-        # endif()
-        # list(LENGTH LANGUAGE_PROP_NAME_LIST LANGUAGE_PROP_NUM)
-        # math(EXPR LANGUAGE_PROP_MAX_ID "${LANGUAGE_PROP_NUM} - 1")
-        # foreach(_ID RANGE ${LANGUAGE_PROP_MAX_ID})
-        #     #
-        #     # (1.1) Initialize 'pot.${LANGUAGE_PROP_NAME}' property as empty if missing.
-        #     #
-        #     list(GET LANGUAGE_PROP_NAME_LIST ${_ID} LANGUAGE_PROP_NAME)
-        #     list(GET LANGUAGE_PROP_TYPE_LIST ${_ID} LANGUAGE_PROP_TYPE)
-        #     string(JSON ${LANGUAGE_PROP_NAME}_CNT 
-        #         ERROR_VARIABLE ${LANGUAGE_PROP_NAME}_ERR 
-        #         GET ${pot_CNT} "${LANGUAGE_PROP_NAME}")
-        #     if(NOT ${LANGUAGE_PROP_NAME}_ERR STREQUAL "NOTFOUND")
-        #         if (LANGUAGE_PROP_TYPE STREQUAL "STRING")
-        #             set(${LANGUAGE_PROP_NAME}_CNT "\"\"")
-        #         endif()
-        #         string(JSON pot_CNT SET ${pot_CNT} 
-        #             "${LANGUAGE_PROP_NAME}" "${${LANGUAGE_PROP_NAME}_CNT}")
-        #     endif()
-        # endforeach()
-        # unset(_ID)
-        # string(JSON JSON_CNT SET ${JSON_CNT} "pot" "${pot_CNT}")
-        # #
-        # # (2) Initialize 'po' property as empty if missing.
-        # #
-        # string(JSON po_CNT ERROR_VARIABLE po_ERR GET ${JSON_CNT} "po")
-        # if(NOT po_ERR STREQUAL "NOTFOUND")
-        #     set(po_CNT "{}")
-        #     string(JSON JSON_CNT SET ${JSON_CNT} "po" "${po_CNT}")
-        # endif()
-        # foreach(_LANGUAGE ${LANGUAGE_LIST})
-        #     #
-        #     # (2.1) Initialize 'po.${_LANGUAGE}' objects as empty if missing.
-        #     #
-        #     string(JSON LANGUAGE_CNT ERROR_VARIABLE LANGUAGE_ERR GET ${po_CNT} "${_LANGUAGE}")
-        #     if(NOT LANGUAGE_ERR STREQUAL "NOTFOUND")
-        #         set(LANGUAGE_CNT "{}")
-        #         string(JSON po_CNT SET ${po_CNT} "${_LANGUAGE}" "${LANGUAGE_CNT}")
-        #     endif()
-        #     list(LENGTH LANGUAGE_PROP_NAME_LIST LANGUAGE_PROP_NUM)
-        #     math(EXPR LANGUAGE_PROP_MAX_ID "${LANGUAGE_PROP_NUM} - 1")
-        #     foreach(_ID RANGE ${LANGUAGE_PROP_MAX_ID})
-        #         #
-        #         # (2.2) Initialize 'po.${_LANGUAGE}.${LANGUAGE_PROP_NAME}' property as empty if missing.
-        #         #
-        #         list(GET LANGUAGE_PROP_NAME_LIST ${_ID} LANGUAGE_PROP_NAME)
-        #         list(GET LANGUAGE_PROP_TYPE_LIST ${_ID} LANGUAGE_PROP_TYPE)
-        #         string(JSON ${LANGUAGE_PROP_NAME}_CNT 
-        #             ERROR_VARIABLE ${LANGUAGE_PROP_NAME}_ERR 
-        #             GET ${LANGUAGE_CNT} "${LANGUAGE_PROP_NAME}")
-        #         if(NOT ${LANGUAGE_PROP_NAME}_ERR STREQUAL "NOTFOUND")
-        #             if (LANGUAGE_PROP_TYPE STREQUAL "STRING")
-        #                 set(${LANGUAGE_PROP_NAME}_CNT "\"\"")
-        #             endif()
-        #             string(JSON LANGUAGE_CNT SET ${LANGUAGE_CNT} "${LANGUAGE_PROP_NAME}" "${${LANGUAGE_PROP_NAME}_CNT}")
-        #         endif()
-        #     endforeach()
-        #     unset(_ID)
-        #     string(JSON po_CNT SET ${po_CNT} "${_LANGUAGE}" "${LANGUAGE_CNT}")
-        # endforeach()
-        # unset(_LANGUAGE)
-        # string(JSON JSON_CNT SET ${JSON_CNT} "po" "${po_CNT}")
-    elseif(IRJF_IN_TYPE STREQUAL "branch")
-        _init_reference_json_file_for_branch()
-        # #
-        # # For 'branch' type:
-        # # (1)   Initialize 'pot' property as empty if missing.
-        # # (1.1) Initialize 'pot.${LANGUAGE_PROP_NAME}' property as empty if missing.
-        # # (1.2) Initialize 'pot.commit.${COMMIT_PROP_NAME}' property as empty if missing.
-        # # (2)   Initialize 'po' property as empty if missing.
-        # # (2.1) Initialize 'po.${_LANGUAGE}' objects as empty if missing.
-        # # (2.2) Initialize 'po.${_LANGUAGE}.${LANGUAGE_PROP_NAME}' property as empty if missing.
-        # # (2.3) Initialize 'po.${_LANGUAGE}.commit.${COMMIT_PROP_NAME}' property as empty if missing.
-        # #
-        # set(LANGUAGE_LIST ${IRJF_IN_LANGUAGES})
-        # set(LANGUAGE_PROP_NAME_LIST branch commit)
-        # set(LANGUAGE_PROP_TYPE_LIST STRING OBJECT)
-        # set(COMMIT_PROP_NAME_LIST date hash title)
-        # set(COMMIT_PROP_TYPE_LIST STRING STRING STRING)
-        # #
-        # # (1) Initialize 'pot' property as empty if missing.
-        # #
-        # string(JSON pot_CNT ERROR_VARIABLE pot_ERR GET ${JSON_CNT} "pot")
-        # if(NOT pot_ERR STREQUAL "NOTFOUND")
-        #     set(pot_CNT "{}")
-        #     string(JSON JSON_CNT SET ${JSON_CNT} "pot" "${pot_CNT}")
-        # endif()
-        # list(LENGTH LANGUAGE_PROP_NAME_LIST LANGUAGE_PROP_NUM)
-        # math(EXPR LANGUAGE_PROP_MAX_ID "${LANGUAGE_PROP_NUM} - 1")
-        # foreach(LANGUAGE_PROP_ID RANGE ${LANGUAGE_PROP_MAX_ID})
-        #     #
-        #     # (1.1) Initialize 'pot.${LANGUAGE_PROP_NAME}' property as empty if missing.
-        #     #
-        #     list(GET LANGUAGE_PROP_NAME_LIST ${LANGUAGE_PROP_ID} LANGUAGE_PROP_NAME)
-        #     list(GET LANGUAGE_PROP_TYPE_LIST ${LANGUAGE_PROP_ID} LANGUAGE_PROP_TYPE)
-        #     string(JSON ${LANGUAGE_PROP_NAME}_CNT 
-        #         ERROR_VARIABLE ${LANGUAGE_PROP_NAME}_ERR 
-        #         GET ${pot_CNT} "${LANGUAGE_PROP_NAME}")
-        #     if(NOT ${LANGUAGE_PROP_NAME}_ERR STREQUAL "NOTFOUND")
-        #         if (LANGUAGE_PROP_TYPE STREQUAL "STRING")
-        #             set(${LANGUAGE_PROP_NAME}_CNT "\"\"")
-        #         elseif (LANGUAGE_PROP_TYPE STREQUAL "OBJECT")
-        #             set(${LANGUAGE_PROP_NAME}_CNT "{}")
-        #         endif()
-        #         string(JSON pot_CNT SET ${pot_CNT} "${LANGUAGE_PROP_NAME}" "${${LANGUAGE_PROP_NAME}_CNT}")
-        #     endif()
-        #     if(LANGUAGE_PROP_NAME STREQUAL "commit")
-        #         #
-        #         # (1.2) Initialize 'pot.commit.${COMMIT_PROP_NAME}' property as empty if missing.
-        #         #
-        #         list(LENGTH COMMIT_PROP_NAME_LIST COMMIT_PROP_NUM)
-        #         math(EXPR COMMIT_PROP_MAX_ID "${COMMIT_PROP_NUM} - 1")
-        #         foreach(COMMIT_PROP_ID RANGE ${COMMIT_PROP_MAX_ID})
-        #             list(GET COMMIT_PROP_NAME_LIST ${COMMIT_PROP_ID} COMMIT_PROP_NAME)
-        #             list(GET COMMIT_PROP_TYPE_LIST ${COMMIT_PROP_ID} COMMIT_PROP_TYPE)
-        #             string(JSON ${COMMIT_PROP_NAME}_CNT 
-        #                 ERROR_VARIABLE ${COMMIT_PROP_NAME}_ERR 
-        #                 GET ${commit_CNT} "${COMMIT_PROP_NAME}")
-        #             if(NOT ${COMMIT_PROP_NAME}_ERR STREQUAL "NOTFOUND")
-        #                 if (COMMIT_PROP_TYPE STREQUAL "STRING")
-        #                     set(${COMMIT_PROP_NAME}_CNT "\"\"")
-        #                 elseif (COMMIT_PROP_TYPE STREQUAL "OBJECT")
-        #                     set(${COMMIT_PROP_NAME}_CNT "{}")
-        #                 endif()
-        #                 string(JSON commit_CNT SET ${commit_CNT} 
-        #                     "${COMMIT_PROP_NAME}" "${${COMMIT_PROP_NAME}_CNT}")
-        #             endif()
-        #         endforeach()
-        #         string(JSON pot_CNT SET ${pot_CNT} "commit" "${commit_CNT}")
-        #     endif()
-        # endforeach()
-        # unset(LANGUAGE_PROP_ID)
-        # string(JSON JSON_CNT SET ${JSON_CNT} "pot" "${pot_CNT}")
-        # #
-        # # (2) Initialize 'po' property as empty if missing.
-        # #
-        # string(JSON po_CNT ERROR_VARIABLE po_ERR GET ${JSON_CNT} "po")
-        # if(NOT po_ERR STREQUAL "NOTFOUND")
-        #     set(po_CNT "{}")
-        #     string(JSON JSON_CNT SET ${JSON_CNT} "po" "${po_CNT}")
-        # endif()
-        # foreach(_LANGUAGE ${LANGUAGE_LIST})
-        #     #
-        #     # (2.1) Initialize 'po.${_LANGUAGE}' objects as empty if missing.
-        #     #
-        #     string(JSON LANGUAGE_CNT ERROR_VARIABLE LANGUAGE_ERR GET ${po_CNT} "${_LANGUAGE}")
-        #     if(NOT LANGUAGE_ERR STREQUAL "NOTFOUND")
-        #         set(LANGUAGE_CNT "{}")
-        #         string(JSON po_CNT SET ${po_CNT} "${_LANGUAGE}" "${LANGUAGE_CNT}")
-        #     endif()
-        #     list(LENGTH LANGUAGE_PROP_NAME_LIST LANGUAGE_PROP_NUM)
-        #     math(EXPR LANGUAGE_PROP_MAX_ID "${LANGUAGE_PROP_NUM} - 1")
-        #     foreach(LANGUAGE_PROP_ID RANGE ${LANGUAGE_PROP_MAX_ID})
-        #         #
-        #         # (2.2) Initialize 'po.${_LANGUAGE}.${LANGUAGE_PROP_NAME}' property as empty if missing.
-        #         #
-        #         list(GET LANGUAGE_PROP_NAME_LIST ${LANGUAGE_PROP_ID} LANGUAGE_PROP_NAME)
-        #         list(GET LANGUAGE_PROP_TYPE_LIST ${LANGUAGE_PROP_ID} LANGUAGE_PROP_TYPE)
-        #         string(JSON ${LANGUAGE_PROP_NAME}_CNT 
-        #             ERROR_VARIABLE ${LANGUAGE_PROP_NAME}_ERR 
-        #             GET ${LANGUAGE_CNT} "${LANGUAGE_PROP_NAME}")
-        #         if(NOT ${LANGUAGE_PROP_NAME}_ERR STREQUAL "NOTFOUND")
-        #             if (LANGUAGE_PROP_TYPE STREQUAL "STRING")
-        #                 set(${LANGUAGE_PROP_NAME}_CNT "\"\"")
-        #             elseif (LANGUAGE_PROP_TYPE STREQUAL "OBJECT")
-        #                 set(${LANGUAGE_PROP_NAME}_CNT "{}")
-        #             endif()
-        #             string(JSON LANGUAGE_CNT SET ${LANGUAGE_CNT} 
-        #                 "${LANGUAGE_PROP_NAME}" "${${LANGUAGE_PROP_NAME}_CNT}")
-        #         endif()
-        #         if(LANGUAGE_PROP_NAME STREQUAL "commit")
-        #             list(LENGTH COMMIT_PROP_NAME_LIST COMMIT_PROP_NUM)
-        #             math(EXPR COMMIT_PROP_MAX_ID "${COMMIT_PROP_NUM} - 1")
-        #             foreach(COMMIT_PROP_ID RANGE ${COMMIT_PROP_MAX_ID})
-        #                 #
-        #                 # (2.3) Initialize 'po.${_LANGUAGE}.commit.${COMMIT_PROP_NAME}' property as empty if missing.
-        #                 #
-        #                 list(GET COMMIT_PROP_NAME_LIST ${COMMIT_PROP_ID} COMMIT_PROP_NAME)
-        #                 list(GET COMMIT_PROP_TYPE_LIST ${COMMIT_PROP_ID} COMMIT_PROP_TYPE)
-        #                 string(JSON ${COMMIT_PROP_NAME}_CNT 
-        #                     ERROR_VARIABLE ${COMMIT_PROP_NAME}_ERR 
-        #                     GET ${commit_CNT} "${COMMIT_PROP_NAME}")
-        #                 if(NOT ${COMMIT_PROP_NAME}_ERR STREQUAL "NOTFOUND")
-        #                     if (COMMIT_PROP_TYPE STREQUAL "STRING")
-        #                         set(${COMMIT_PROP_NAME}_CNT "\"\"")
-        #                     elseif (COMMIT_PROP_TYPE STREQUAL "OBJECT")
-        #                         set(${COMMIT_PROP_NAME}_CNT "{}")
-        #                     endif()
-        #                     string(JSON commit_CNT SET ${commit_CNT} 
-        #                         "${COMMIT_PROP_NAME}" "${${COMMIT_PROP_NAME}_CNT}")
-        #                 endif()
-        #             endforeach()
-        #             string(JSON LANGUAGE_CNT SET ${LANGUAGE_CNT} "commit" "${commit_CNT}")
-        #         endif()
-        #     endforeach()
-        #     string(JSON po_CNT SET ${po_CNT} "${_LANGUAGE}" "${LANGUAGE_CNT}")
-        # endforeach()
-        # unset(_LANGUAGE)
-        # string(JSON JSON_CNT SET ${JSON_CNT} "po" "${po_CNT}")
-    else()
-        message(FATAL_ERROR "Invalid IRJF_IN_TYPE argument. (${IRJF_IN_TYPE})")
-    endif()
-    #
-    # Write the content of ${JSON_CNT} into ${_FILEPATH}
-    #
-    file(WRITE "${_FILEPATH}" ${JSON_CNT})
-endfunction()
+endmacro()
+
 
 #
-# Get members of JSON object
+# Get members of JSON object.
 #
 function(get_members_of_json_object)
     #
@@ -657,8 +611,9 @@ function(get_members_of_json_object)
     endif()
 endfunction()
 
+
 #
-# Set members of JSON object for 'commit'
+# Set members of JSON object for 'commit'.
 #
 function(set_members_of_commit_json_object)
     #
@@ -698,10 +653,11 @@ function(set_members_of_commit_json_object)
     set(${SMOCJO_OUT_JSON_OBJECT} ${COMMIT_OBJECT} PARENT_SCOPE)
 endfunction()
 
+
 #
-# Set members of JSON object for 'language'.
+# Set members of JSON object for 'reference'.
 #
-function(set_members_of_language_json_object)
+function(set_members_of_reference_json_object)
     #
     # Parse arguments.
     #
@@ -712,48 +668,59 @@ function(set_members_of_language_json_object)
                           IN_MEMBER_TAG  
                           OUT_JSON_OBJECT)
     set(MULTI_VALUE_ARGS)
-    cmake_parse_arguments(SMOLJO 
-        "${OPTIONS}" 
-        "${ONE_VALUE_ARGS}" 
-        "${MULTI_VALUE_ARGS}" 
+    cmake_parse_arguments(SMORJO 
+        "${OPTIONS}"
+        "${ONE_VALUE_ARGS}"
+        "${MULTI_VALUE_ARGS}"
         ${ARGN})
     #
     # Ensure all required arguments are provided.
     #
-    set(REQUIRED_ARGS             IN_TYPE
-                                  OUT_JSON_OBJECT)
+    if(SMORJO_IN_TYPE STREQUAL "tag")
+        set(REQUIRED_ARGS   IN_TYPE
+                            IN_MEMBER_TAG
+                            OUT_JSON_OBJECT)
+    elseif(SMORJO_IN_TYPE STREQUAL "branch")
+        set(REQUIRED_ARGS   IN_TYPE
+                            IN_MEMBER_BRANCH
+                            IN_MEMBER_COMMIT
+                            OUT_JSON_OBJECT)
+    else()
+        message(FATAL_ERROR "Missing/Invalid IRJF_IN_TYPE argument. (${SMORJO_IN_TYPE})")
+    endif()
     foreach(_ARG ${REQUIRED_ARGS})
-        if(NOT DEFINED SMOLJO_${_ARG})
-            message(FATAL_ERROR "Missing SMOLJO_${_ARG} argument.")
+        if(NOT DEFINED SMORJO_${_ARG})
+            message(FATAL_ERROR "Missing SMORJO_${_ARG} argument.")
         endif()
     endforeach()
     unset(_ARG)
     #
-    # Construct JSON object for 'language' based on ${SMOLJO_IN_TYPE}.
+    # Construct JSON object for 'reference' based on ${SMORJO_IN_TYPE}.
     #
-    set(LANGUAGE_OBJECT "{}")
-    if(SMOLJO_IN_TYPE STREQUAL "branch")
-        if(NOT DEFINED SMOLJO_IN_MEMBER_BRANCH)
-            message(FATAL_ERROR "Missing SMOLJO_IN_MEMBER_BRANCH argument.")
+    set(REFERENCE_OBJECT "{}")
+    if(SMORJO_IN_TYPE STREQUAL "branch")
+        if(NOT DEFINED SMORJO_IN_MEMBER_BRANCH)
+            message(FATAL_ERROR "Missing SMORJO_IN_MEMBER_BRANCH argument.")
         endif()
-        if(NOT DEFINED SMOLJO_IN_MEMBER_COMMIT)
-            message(FATAL_ERROR "Missing SMOLJO_IN_MEMBER_COMMIT argument.")
+        if(NOT DEFINED SMORJO_IN_MEMBER_COMMIT)
+            message(FATAL_ERROR "Missing SMORJO_IN_MEMBER_COMMIT argument.")
         endif()
-        string(JSON LANGUAGE_OBJECT SET ${LANGUAGE_OBJECT} "branch" "${SMOLJO_IN_MEMBER_BRANCH}")
-        string(JSON LANGUAGE_OBJECT SET ${LANGUAGE_OBJECT} "commit" "${SMOLJO_IN_MEMBER_COMMIT}")
-    elseif(SMOLJO_IN_TYPE STREQUAL "tag")
-        if(NOT DEFINED SMOLJO_IN_MEMBER_TAG)
-            message(FATAL_ERROR "Missing SMOLJO_IN_MEMBER_TAG argument.")
+        string(JSON REFERENCE_OBJECT SET ${REFERENCE_OBJECT} "branch" "${SMORJO_IN_MEMBER_BRANCH}")
+        string(JSON REFERENCE_OBJECT SET ${REFERENCE_OBJECT} "commit" "${SMORJO_IN_MEMBER_COMMIT}")
+    elseif(SMORJO_IN_TYPE STREQUAL "tag")
+        if(NOT DEFINED SMORJO_IN_MEMBER_TAG)
+            message(FATAL_ERROR "Missing SMORJO_IN_MEMBER_TAG argument.")
         endif()
-        string(JSON LANGUAGE_OBJECT SET ${LANGUAGE_OBJECT} "tag" "${SMOLJO_IN_MEMBER_TAG}")
+        string(JSON REFERENCE_OBJECT SET ${REFERENCE_OBJECT} "tag" "${SMORJO_IN_MEMBER_TAG}")
     else()
-        message(FATAL_ERROR "Invalid SMOLJO_IN_TYPE value. (${SMOLJO_IN_TYPE})")
+        message(FATAL_ERROR "Invalid SMORJO_IN_TYPE value. (${SMORJO_IN_TYPE})")
     endif()
     #
-    # Return the content of ${LANGUAGE_OBJECT} to OUT_JSON_OBJECT.
+    # Return the content of ${REFERENCE_OBJECT} to OUT_JSON_OBJECT.
     #
-    set(${SMOLJO_OUT_JSON_OBJECT} ${LANGUAGE_OBJECT} PARENT_SCOPE)
+    set(${SMORJO_OUT_JSON_OBJECT} ${REFERENCE_OBJECT} PARENT_SCOPE)
 endfunction()
+
 
 #
 # Dot Notation Setter.
@@ -777,9 +744,9 @@ function(set_json_value_by_dot_notation)
     #
     # Ensure all required arguments are provided.
     #
-    set(REQUIRED_ARGS           IN_JSON_OBJECT 
+    set(REQUIRED_ARGS           IN_JSON_OBJECT
                                 IN_DOT_NOTATION
-                                IN_JSON_VALUE 
+                                IN_JSON_VALUE
                                 OUT_JSON_OBJECT)
     foreach(_ARG ${REQUIRED_ARGS})
         if(NOT DEFINED SJVBDN_${_ARG})
@@ -889,6 +856,7 @@ function(set_json_value_by_dot_notation)
     set(${SJVBDN_ERROR_VARIABLE} "NOTFOUND" PARENT_SCOPE)
     set(${SJVBDN_OUT_JSON_OBJECT} ${CUR_JSON} PARENT_SCOPE)
 endfunction()
+
 
 #
 # Dot Notation Getter.
