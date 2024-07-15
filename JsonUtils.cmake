@@ -132,14 +132,14 @@ function(init_references_json_file)
     set(OPTIONS)
     set(ONE_VALUE_ARGS    IN_FILEPATH
                           IN_VERSION
-                          IN_TYPE 
+                          IN_TYPE
                           IN_MODE)
     set(MULTI_VALUE_ARGS  IN_LANGUAGE
                           IN_REPOSITORY)
     cmake_parse_arguments(IRJF
-        "${OPTIONS}" 
-        "${ONE_VALUE_ARGS}" 
-        "${MULTI_VALUE_ARGS}" 
+        "${OPTIONS}"
+        "${ONE_VALUE_ARGS}"
+        "${MULTI_VALUE_ARGS}"
         ${ARGN})
     #
     # Ensure all required arguments are provided.
@@ -147,7 +147,7 @@ function(init_references_json_file)
     if(IRJF_IN_MODE STREQUAL "language")
         set(REQUIRED_ARGS   IN_FILEPATH
                             IN_VERSION
-                            IN_TYPE 
+                            IN_TYPE
                             IN_MODE
                             IN_LANGUAGE)
     elseif(IRJF_IN_MODE STREQUAL "repository")
