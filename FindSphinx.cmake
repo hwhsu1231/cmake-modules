@@ -133,8 +133,14 @@ unset(_COMP)
 if(Sphinx_BUILD_EXECUTABLE)
     execute_process(
         COMMAND ${Sphinx_BUILD_EXECUTABLE} --version
-        OUTPUT_VARIABLE _Sphinx_VERSION_OUTPUT
-        OUTPUT_STRIP_TRAILING_WHITESPACE)
+        RESULT_VARIABLE _Sphinx_VERSION_RESULT
+        OUTPUT_VARIABLE _Sphinx_VERSION_OUTPUT  OUTPUT_STRIP_TRAILING_WHITESPACE
+        ERROR_VARIABLE  _Sphinx_VERSION_ERROR   ERROR_STRIP_TRAILING_WHITESPACE)
+
+    if (NOT _Sphinx_VERSION_RESULT EQUAL 0)
+
+    endif()
+    
 
     string(REGEX MATCH "([0-9]+\\.[0-9]+\\.[0-9]+)" 
         Sphinx_VERSION ${_Sphinx_VERSION_OUTPUT})
@@ -150,15 +156,16 @@ endif()
 # this will also set Sphinx_FOUND to true if Sphinx_BUILD_EXECUTABLE exists
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(Sphinx
-    REQUIRED_VARS
-        Sphinx_BUILD_EXECUTABLE
-    HANDLE_COMPONENTS
+    # REQUIRED_VARS
+    #     Sphinx_BUILD_EXECUTABLE
     # REASON_FAILURE_MESSAGE
     #     "${_Sphinx_FAILURE_REASON}"
     VERSION_VAR
         Sphinx_VERSION
     FOUND_VAR
-        Sphinx_FOUND)
+        Sphinx_FOUND
+    HANDLE_VERSION_RANGE
+    HANDLE_COMPONENTS)
 
 if(Sphinx_FOUND)
     get_property(_Sphinx_CMAKE_ROLE GLOBAL PROPERTY CMAKE_ROLE)

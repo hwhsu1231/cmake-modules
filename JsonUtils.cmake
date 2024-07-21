@@ -106,7 +106,7 @@ Dot Notation Setter/Getter
 
     set_json_value_by_dot_notation(
         IN_JSON_OBJECT    "${JSON_CNT}"
-        IN_DOT_NOTATION   "po.zh_TW"
+        IN_DOT_NOTATION   ".po.zh_TW"
         IN_VALUE          "${poLocaleValue}"
         OUT_JSON_OBJECT   JSON_CNT)
 
@@ -218,17 +218,17 @@ endfunction()
 macro(_init_references_json_file_for_tag_language)
     #
     # For 'tag' type:
-    # (1)   Initialize 'pot' property as empty if missing.
-    # (1.1) Initialize 'pot.${REF_PROP_NAME}' property as empty if missing.
-    # (2)   Initialize 'po' property as empty if missing.
-    # (2.1) Initialize 'po.${_LANG}' objects as empty if missing.
-    # (2.2) Initialize 'po.${_LANG}.${REF_PROP_NAME}' property as empty if missing.
+    # (1)   Initialize '.pot' property as empty if missing.
+    # (1.1) Initialize '.pot.${REF_PROP_NAME}' property as empty if missing.
+    # (2)   Initialize '.po' property as empty if missing.
+    # (2.1) Initialize '.po.${_LANG}' objects as empty if missing.
+    # (2.2) Initialize '.po.${_LANG}.${REF_PROP_NAME}' property as empty if missing.
     #
-    set(LANG_LIST ${IRJF_IN_LANGUAGE})
+    set(LANG_LIST "${IRJF_IN_LANGUAGE}")
     set(REF_PROP_NAME_LIST tag)
     set(REF_PROP_TYPE_LIST STRING)
     #
-    # (1) Initialize 'pot' property as empty if missing.
+    # (1) Initialize '.pot' property as empty if missing.
     #
     string(JSON pot_CNT ERROR_VARIABLE pot_ERR GET "${JSON_CNT}" "pot")
     if(NOT pot_ERR STREQUAL "NOTFOUND")
@@ -254,7 +254,7 @@ macro(_init_references_json_file_for_tag_language)
     unset(REF_PROP_ID)
     string(JSON JSON_CNT SET "${JSON_CNT}" "pot" "${pot_CNT}")
     #
-    # (2) Initialize 'po' property as empty if missing.
+    # (2) Initialize '.po' property as empty if missing.
     #
     string(JSON po_CNT ERROR_VARIABLE po_ERR GET "${JSON_CNT}" "po")
     if(NOT po_ERR STREQUAL "NOTFOUND")
@@ -263,7 +263,7 @@ macro(_init_references_json_file_for_tag_language)
     endif()
     foreach(_LANG ${LANG_LIST})
         #
-        # (2.1) Initialize 'po.${_LANG}' objects as empty if missing.
+        # (2.1) Initialize '.po.${_LANG}' objects as empty if missing.
         #
         string(JSON ${_LANG}_CNT ERROR_VARIABLE ${_LANG}_ERR GET "${po_CNT}" "${_LANG}")
         if(NOT ${_LANG}_ERR STREQUAL "NOTFOUND")
@@ -274,7 +274,7 @@ macro(_init_references_json_file_for_tag_language)
         math(EXPR REF_PROP_MAX_ID "${REF_PROP_NUM} - 1")
         foreach(REF_PROP_ID RANGE ${REF_PROP_MAX_ID})
             #
-            # (2.2) Initialize 'po.${_LANG}.${REF_PROP_NAME}' property as empty if missing.
+            # (2.2) Initialize '.po.${_LANG}.${REF_PROP_NAME}' property as empty if missing.
             #
             list(GET REF_PROP_NAME_LIST ${REF_PROP_ID} REF_PROP_NAME)
             list(GET REF_PROP_TYPE_LIST ${REF_PROP_ID} REF_PROP_TYPE)
@@ -297,15 +297,15 @@ endmacro()
 macro(_init_references_json_file_for_tag_repository)
     #
     # For 'tag' type:
-    # (1)   Initialize '${_REPO}' property as empty if missing.
-    # (1.1) Initialize '${_REPO}.${REF_PROP_NAME}' property as empty if missing.
+    # (1)   Initialize '.${_REPO}' property as empty if missing.
+    # (1.1) Initialize '.${_REPO}.${REF_PROP_NAME}' property as empty if missing.
     #
     set(REPO_LIST ${IRJF_IN_REPOSITORY})
     set(REF_PROP_NAME_LIST tag)
     set(REF_PROP_TYPE_LIST STRING)
     foreach(_REPO ${REPO_LIST})
         #
-        # (1) Initialize '${_REPO}' property as empty if missing.
+        # (1) Initialize '.${_REPO}' property as empty if missing.
         #
         string(JSON ${_REPO}_CNT ERROR_VARIABLE ${_REPO}_ERR GET "${JSON_CNT}" "${_REPO}")
         if(NOT ${_REPO}_ERR STREQUAL "NOTFOUND")
@@ -316,7 +316,7 @@ macro(_init_references_json_file_for_tag_repository)
         math(EXPR REF_PROP_MAX_ID "${REF_PROP_NUM} - 1")
         foreach(REF_PROP_ID RANGE ${REF_PROP_MAX_ID})
             #
-            # (1.1) Initialize '${_REPO}.${REF_PROP_NAME}' property as empty if missing.
+            # (1.1) Initialize '.${_REPO}.${REF_PROP_NAME}' property as empty if missing.
             #
             list(GET REF_PROP_NAME_LIST ${REF_PROP_ID} REF_PROP_NAME)
             list(GET REF_PROP_TYPE_LIST ${REF_PROP_ID} REF_PROP_TYPE)
@@ -338,21 +338,21 @@ endmacro()
 macro(_init_references_json_file_for_branch_language)
     #
     # For 'branch' type:
-    # (1)   Initialize 'pot' property as empty if missing.
-    # (1.1) Initialize 'pot.${REF_PROP_NAME}' property as empty if missing.
-    # (1.2) Initialize 'pot.commit.${COMMIT_PROP_NAME}' property as empty if missing.
-    # (2)   Initialize 'po' property as empty if missing.
-    # (2.1) Initialize 'po.${_LANG}' objects as empty if missing.
-    # (2.2) Initialize 'po.${_LANG}.${REF_PROP_NAME}' property as empty if missing.
-    # (2.3) Initialize 'po.${_LANG}.commit.${COMMIT_PROP_NAME}' property as empty if missing.
+    # (1)   Initialize '.pot' property as empty if missing.
+    # (1.1) Initialize '.pot.${REF_PROP_NAME}' property as empty if missing.
+    # (1.2) Initialize '.pot.commit.${COMMIT_PROP_NAME}' property as empty if missing.
+    # (2)   Initialize '.po' property as empty if missing.
+    # (2.1) Initialize '..po.${_LANG}' objects as empty if missing.
+    # (2.2) Initialize '..po.${_LANG}.${REF_PROP_NAME}' property as empty if missing.
+    # (2.3) Initialize '..po.${_LANG}.commit.${COMMIT_PROP_NAME}' property as empty if missing.
     #
-    set(LANG_LIST ${IRJF_IN_LANGUAGE})
+    set(LANG_LIST "${IRJF_IN_LANGUAGE}")
     set(REF_PROP_NAME_LIST branch commit)
     set(REF_PROP_TYPE_LIST STRING OBJECT)
     set(COMMIT_PROP_NAME_LIST date hash title)
     set(COMMIT_PROP_TYPE_LIST STRING STRING STRING)
     #
-    # (1) Initialize 'pot' property as empty if missing.
+    # (1) Initialize '.pot' property as empty if missing.
     #
     string(JSON pot_CNT ERROR_VARIABLE pot_ERR GET "${JSON_CNT}" "pot")
     if(NOT pot_ERR STREQUAL "NOTFOUND")
@@ -363,7 +363,7 @@ macro(_init_references_json_file_for_branch_language)
     math(EXPR REF_PROP_MAX_ID "${REF_PROP_NUM} - 1")
     foreach(REF_PROP_ID RANGE ${REF_PROP_MAX_ID})
         #
-        # (1.1) Initialize 'pot.${REF_PROP_NAME}' property as empty if missing.
+        # (1.1) Initialize '.pot.${REF_PROP_NAME}' property as empty if missing.
         #
         list(GET REF_PROP_NAME_LIST ${REF_PROP_ID} REF_PROP_NAME)
         list(GET REF_PROP_TYPE_LIST ${REF_PROP_ID} REF_PROP_TYPE)
@@ -378,7 +378,7 @@ macro(_init_references_json_file_for_branch_language)
         endif()
         if(REF_PROP_NAME STREQUAL "commit")
             #
-            # (1.2) Initialize 'pot.commit.${COMMIT_PROP_NAME}' property as empty if missing.
+            # (1.2) Initialize '.pot.commit.${COMMIT_PROP_NAME}' property as empty if missing.
             #
             list(LENGTH COMMIT_PROP_NAME_LIST COMMIT_PROP_NUM)
             math(EXPR COMMIT_PROP_MAX_ID "${COMMIT_PROP_NUM} - 1")
@@ -410,7 +410,7 @@ macro(_init_references_json_file_for_branch_language)
     endif()
     foreach(_LANG ${LANG_LIST})
         #
-        # (2.1) Initialize 'po.${_LANG}' objects as empty if missing.
+        # (2.1) Initialize '.po.${_LANG}' objects as empty if missing.
         #
         string(JSON ${_LANG}_CNT ERROR_VARIABLE ${_LANG}_ERR GET "${po_CNT}" "${_LANG}")
         if(NOT ${_LANG}_ERR STREQUAL "NOTFOUND")
@@ -421,7 +421,7 @@ macro(_init_references_json_file_for_branch_language)
         math(EXPR REF_PROP_MAX_ID "${REF_PROP_NUM} - 1")
         foreach(REF_PROP_ID RANGE ${REF_PROP_MAX_ID})
             #
-            # (2.2) Initialize 'po.${_LANG}.${REF_PROP_NAME}' property as empty if missing.
+            # (2.2) Initialize '.po.${_LANG}.${REF_PROP_NAME}' property as empty if missing.
             #
             list(GET REF_PROP_NAME_LIST ${REF_PROP_ID} REF_PROP_NAME)
             list(GET REF_PROP_TYPE_LIST ${REF_PROP_ID} REF_PROP_TYPE)
@@ -439,7 +439,7 @@ macro(_init_references_json_file_for_branch_language)
                 math(EXPR COMMIT_PROP_MAX_ID "${COMMIT_PROP_NUM} - 1")
                 foreach(COMMIT_PROP_ID RANGE ${COMMIT_PROP_MAX_ID})
                     #
-                    # (2.3) Initialize 'po.${_LANG}.commit.${COMMIT_PROP_NAME}' property as empty if missing.
+                    # (2.3) Initialize '.po.${_LANG}.commit.${COMMIT_PROP_NAME}' property as empty if missing.
                     #
                     list(GET COMMIT_PROP_NAME_LIST ${COMMIT_PROP_ID} COMMIT_PROP_NAME)
                     list(GET COMMIT_PROP_TYPE_LIST ${COMMIT_PROP_ID} COMMIT_PROP_TYPE)
@@ -466,18 +466,18 @@ endmacro()
 macro(_init_references_json_file_for_branch_repository)
     #
     # For 'branch' type:
-    # (1)   Initialize '${_REPO}' property as empty if missing.
-    # (1.1) Initialize '${_REPO}.${REF_PROP_NAME}' property as empty if missing.
-    # (1.2) Initialize '${_REPO}.commit.${COMMIT_PROP_NAME}' property as empty if missing.
+    # (1)   Initialize '.${_REPO}' property as empty if missing.
+    # (1.1) Initialize '.${_REPO}.${REF_PROP_NAME}' property as empty if missing.
+    # (1.2) Initialize '.${_REPO}.commit.${COMMIT_PROP_NAME}' property as empty if missing.
     #
-    set(REPO_LIST ${IRJF_IN_REPOSITORY})
+    set(REPO_LIST "${IRJF_IN_REPOSITORY}")
     set(REF_PROP_NAME_LIST branch commit)
     set(REF_PROP_TYPE_LIST STRING OBJECT)
     set(COMMIT_PROP_NAME_LIST date hash title)
     set(COMMIT_PROP_TYPE_LIST STRING STRING STRING)
     foreach(_REPO ${REPO_LIST})
         #
-        # (1) Initialize '${_REPO}' property as empty if missing.
+        # (1) Initialize '.${_REPO}' property as empty if missing.
         #
         string(JSON ${_REPO}_CNT ERROR_VARIABLE ${_REPO}_ERR GET "${JSON_CNT}" "${_REPO}")
         if(NOT ${_REPO}_ERR STREQUAL "NOTFOUND")
@@ -488,7 +488,7 @@ macro(_init_references_json_file_for_branch_repository)
         math(EXPR REF_PROP_MAX_ID "${REF_PROP_NUM} - 1")
         foreach(REF_PROP_ID RANGE ${REF_PROP_MAX_ID})
             #
-            # (1.1) Initialize '${_REPO}.${REF_PROP_NAME}' property as empty if missing.
+            # (1.1) Initialize '.${_REPO}.${REF_PROP_NAME}' property as empty if missing.
             #
             list(GET REF_PROP_NAME_LIST ${REF_PROP_ID} REF_PROP_NAME)
             list(GET REF_PROP_TYPE_LIST ${REF_PROP_ID} REF_PROP_TYPE)
@@ -504,7 +504,7 @@ macro(_init_references_json_file_for_branch_repository)
             endif()
             if(REF_PROP_NAME STREQUAL "commit")
                 #
-                # (1.2) Initialize '${_REPO}.commit.${COMMIT_PROP_NAME}' property as empty if missing.
+                # (1.2) Initialize '.${_REPO}.commit.${COMMIT_PROP_NAME}' property as empty if missing.
                 #
                 list(LENGTH COMMIT_PROP_NAME_LIST COMMIT_PROP_NUM)
                 math(EXPR COMMIT_PROP_MAX_ID "${COMMIT_PROP_NUM} - 1")
@@ -923,7 +923,7 @@ function(get_json_value_by_dot_notation)
         #
         set(CUR_NAME "${CUR_PATH}")
         set(CUR_PATH)
-        string(JSON CUR_JSON ERROR_VARIABLE ERR_VAR GET ${CUR_JSON} "${CUR_NAME}")
+        string(JSON CUR_JSON ERROR_VARIABLE ERR_VAR GET "${CUR_JSON}" "${CUR_NAME}")
         if(CUR_JSON MATCHES "NOTFOUND$")
             #
             # Return the error message to ERROR_VARIABLE if ERROR_VARIABLE is provided.
