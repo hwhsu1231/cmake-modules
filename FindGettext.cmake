@@ -160,6 +160,8 @@ set(_Gettext_SEARCH_PATHS
     "$ENV{ProgramFiles}\\gettext-iconv\\bin"
     "$ENV{ProgramFiles}\\Git\\usr\\bin")
 
+set(_Gettext_FAILURE_REASON "")
+
 foreach(_COMP ${_Gettext_KNOWN_COMPONENTS})
     string(TOLOWER ${_COMP} _COMP_LOWER)
     string(TOUPPER ${_COMP} _COMP_UPPER)
@@ -177,28 +179,28 @@ foreach(_COMP ${_Gettext_KNOWN_COMPONENTS})
 endforeach()
 unset(_COMP)
 
-# foreach(_COMP IN LISTS Gettext_FIND_COMPONENTS)
-#     string(TOUPPER "${_COMP}" _COMP_UPPER)
-#     if(Gettext_${_COMP_UPPER}_EXECUTABLE)
-#         set(Gettext_${_COMP}_FOUND TRUE)
-#     else()
-#         set(Gettext_${_COMP}_FOUND FALSE)
-#     endif()
-# endforeach()
-# unset(_COMP)
-
 if(Gettext_XGETTEXT_EXECUTABLE)
     execute_process(
         COMMAND ${Gettext_XGETTEXT_EXECUTABLE} --version
-        OUTPUT_VARIABLE _XGETTEXT_VERSION_OUTPUT
-        OUTPUT_STRIP_TRAILING_WHITESPACE)
+        RESULT_VARIABLE _XGETTEXT_VERSION_RESULT
+        OUTPUT_VARIABLE _XGETTEXT_VERSION_OUTPUT  OUTPUT_STRIP_TRAILING_WHITESPACE
+        ERROR_VARIABLE  _XGETTEXT_VERSION_ERROR   ERROR_STRIP_TRAILING_WHITESPACE)
 
-    string(REGEX MATCH "([0-9]+\\.[0-9]+)"
-        Gettext_VERSION ${_XGETTEXT_VERSION_OUTPUT})
-
-    string(REGEX MATCH "([0-9]+)\\.([0-9]+)" _ ${Gettext_VERSION})
-    set(Gettext_VERSION_MAJOR "${CMAKE_MATCH_1}")
-    set(Gettext_VERSION_MINOR "${CMAKE_MATCH_2}")
+    if (_XGETTEXT_VERSION_RESULT EQUAL 0)
+        string(REGEX MATCH "([0-9]+\\.[0-9]+)" Gettext_VERSION ${_XGETTEXT_VERSION_OUTPUT})
+        string(REGEX MATCH "([0-9]+)\\.([0-9]+)" _ ${Gettext_VERSION})
+        set(Gettext_VERSION_MAJOR "${CMAKE_MATCH_1}")
+        set(Gettext_VERSION_MINOR "${CMAKE_MATCH_2}")
+    else()
+        # Set Gettext_Xgettext_FOUND to FALSE when 'xgettext --version' is broken.
+        set(Gettext_Xgettext_FOUND FALSE)
+        string(APPEND _Gettext_FAILURE_REASON
+        "The command\n"
+        "      \"${Gettext_XGETTEXT_EXECUTABLE}\" --version\n"
+        "    failed with result: \n${_XGETTEXT_VERSION_RESULT}\n"
+        "    stdout:\n${_XGETTEXT_VERSION_OUTPUT}\n"
+        "    stderr:\n${_XGETTEXT_VERSION_ERROR}")
+    endif()
 endif()
 
 # Handle REQUIRED and QUIET arguments
@@ -209,6 +211,8 @@ find_package_handle_standard_args(Gettext
         Gettext_VERSION
     FOUND_VAR
         Gettext_FOUND
+    REASON_FAILURE_MESSAGE
+        "${_Gettext_FAILURE_REASON}"
     HANDLE_VERSION_RANGE
     HANDLE_COMPONENTS)
 

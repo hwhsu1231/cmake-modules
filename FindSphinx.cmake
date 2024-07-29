@@ -97,9 +97,9 @@ set(_Sphinx_SEARCH_HINTS
     ENV Sphinx_ROOT_DIR
     ENV VIRTUAL_ENV)
 
-set(_Sphinx_SEARCH_PATHS)
+set(_Sphinx_SEARCH_PATHS "")
 
-set(_Sphinx_FAILURE_REASON)
+set(_Sphinx_FAILURE_REASON "")
 
 foreach(_COMP ${_Sphinx_KNOWN_COMPONENTS})
     string(TOLOWER ${_COMP} _COMP_LOWER)
@@ -130,7 +130,6 @@ foreach(_COMP IN LISTS Sphinx_FIND_COMPONENTS)
 endforeach()
 unset(_COMP)
 
-set(_Sphinx_FAILURE_REASON "")
 if(Sphinx_BUILD_EXECUTABLE)
     execute_process(
         COMMAND ${Sphinx_BUILD_EXECUTABLE} --version
@@ -145,16 +144,14 @@ if(Sphinx_BUILD_EXECUTABLE)
         set(Sphinx_VERSION_MINOR "${CMAKE_MATCH_2}")
         set(Sphinx_VERSION_PATCH "${CMAKE_MATCH_3}")
     else()
+        # Set Sphinx_Build_FOUND to FALSE when sphinx-build is broken.
+        set(Sphinx_Build_FOUND FALSE)
         string(APPEND _Sphinx_FAILURE_REASON
         "The command\n"
         "      \"${Sphinx_BUILD_EXECUTABLE}\" --version\n"
-        "    failed with output:\n${_Sphinx_VERSION_OUTPUT}\n"
-        "    stderr: \n${_Sphinx_VERSION_ERROR}\n"
-        "    result: \n${_Sphinx_VERSION_RESULT}"
-        )
-        message(STATUS "_Sphinx_VERSION_RESULT = ${_Sphinx_VERSION_RESULT}")
-        message(STATUS "_Sphinx_VERSION_OUTPUT = ${_Sphinx_VERSION_OUTPUT}")
-        message(STATUS "_Sphinx_VERSION_ERROR  = ${_Sphinx_VERSION_ERROR}")
+        "    failed with result: \n${_Sphinx_VERSION_RESULT}\n"
+        "    stdout:\n${_Sphinx_VERSION_OUTPUT}\n"
+        "    stderr:\n${_Sphinx_VERSION_ERROR}")
     endif()
 endif()
 
@@ -162,14 +159,12 @@ endif()
 # this will also set Sphinx_FOUND to true if Sphinx_BUILD_EXECUTABLE exists
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(Sphinx
-    # REQUIRED_VARS
-    #     Sphinx_BUILD_EXECUTABLE
-    REASON_FAILURE_MESSAGE
-        "${_Sphinx_FAILURE_REASON}"
     VERSION_VAR
         Sphinx_VERSION
     FOUND_VAR
         Sphinx_FOUND
+    REASON_FAILURE_MESSAGE
+        "${_Sphinx_FAILURE_REASON}"
     HANDLE_VERSION_RANGE
     HANDLE_COMPONENTS)
 
