@@ -130,6 +130,7 @@ foreach(_COMP IN LISTS Sphinx_FIND_COMPONENTS)
 endforeach()
 unset(_COMP)
 
+set(_Sphinx_FAILURE_REASON "")
 if(Sphinx_BUILD_EXECUTABLE)
     execute_process(
         COMMAND ${Sphinx_BUILD_EXECUTABLE} --version
@@ -137,19 +138,24 @@ if(Sphinx_BUILD_EXECUTABLE)
         OUTPUT_VARIABLE _Sphinx_VERSION_OUTPUT  OUTPUT_STRIP_TRAILING_WHITESPACE
         ERROR_VARIABLE  _Sphinx_VERSION_ERROR   ERROR_STRIP_TRAILING_WHITESPACE)
 
-    if (NOT _Sphinx_VERSION_RESULT EQUAL 0)
-
+    if (_Sphinx_VERSION_RESULT EQUAL 0)
+        string(REGEX MATCH "([0-9]+\\.[0-9]+\\.[0-9]+)" Sphinx_VERSION ${_Sphinx_VERSION_OUTPUT})
+        string(REGEX MATCH "([0-9]+)\\.([0-9]+)\\.([0-9]+)" _ ${Sphinx_VERSION})
+        set(Sphinx_VERSION_MAJOR "${CMAKE_MATCH_1}")
+        set(Sphinx_VERSION_MINOR "${CMAKE_MATCH_2}")
+        set(Sphinx_VERSION_PATCH "${CMAKE_MATCH_3}")
+    else()
+        string(APPEND _Sphinx_FAILURE_REASON
+        "The command\n"
+        "      \"${Sphinx_BUILD_EXECUTABLE}\" --version\n"
+        "    failed with output:\n${_Sphinx_VERSION_OUTPUT}\n"
+        "    stderr: \n${_Sphinx_VERSION_ERROR}\n"
+        "    result: \n${_Sphinx_VERSION_RESULT}"
+        )
+        message(STATUS "_Sphinx_VERSION_RESULT = ${_Sphinx_VERSION_RESULT}")
+        message(STATUS "_Sphinx_VERSION_OUTPUT = ${_Sphinx_VERSION_OUTPUT}")
+        message(STATUS "_Sphinx_VERSION_ERROR  = ${_Sphinx_VERSION_ERROR}")
     endif()
-    
-
-    string(REGEX MATCH "([0-9]+\\.[0-9]+\\.[0-9]+)" 
-        Sphinx_VERSION ${_Sphinx_VERSION_OUTPUT})
-    unset(_Sphinx_VERSION_OUTPUT)
-
-    string(REGEX MATCH "([0-9]+)\\.([0-9]+)\\.([0-9]+)" _ ${Sphinx_VERSION})
-    set(Sphinx_VERSION_MAJOR "${CMAKE_MATCH_1}")
-    set(Sphinx_VERSION_MINOR "${CMAKE_MATCH_2}")
-    set(Sphinx_VERSION_PATCH "${CMAKE_MATCH_3}")
 endif()
 
 # Handle REQUIRED and QUIET arguments
@@ -158,8 +164,8 @@ include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(Sphinx
     # REQUIRED_VARS
     #     Sphinx_BUILD_EXECUTABLE
-    # REASON_FAILURE_MESSAGE
-    #     "${_Sphinx_FAILURE_REASON}"
+    REASON_FAILURE_MESSAGE
+        "${_Sphinx_FAILURE_REASON}"
     VERSION_VAR
         Sphinx_VERSION
     FOUND_VAR
