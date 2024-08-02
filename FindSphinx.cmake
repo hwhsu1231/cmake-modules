@@ -159,6 +159,8 @@ endif()
 # this will also set Sphinx_FOUND to true if Sphinx_BUILD_EXECUTABLE exists
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(Sphinx
+    REQUIRED_VARS
+        Sphinx_BUILD_EXECUTABLE
     VERSION_VAR
         Sphinx_VERSION
     FOUND_VAR

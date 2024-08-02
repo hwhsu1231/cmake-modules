@@ -207,6 +207,8 @@ endif()
 # this will also set SPHINX_FOUND to true if Gettext_XGETTEXT_EXECUTABLE exists
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(Gettext
+    REQUIRED_VARS
+        Gettext_XGETTEXT_EXECUTABLE
     VERSION_VAR
         Gettext_VERSION
     FOUND_VAR
