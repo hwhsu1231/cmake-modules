@@ -25,7 +25,7 @@ GitUtilities
         IN_REPO_PATH        "${PROJ_OUT_REPO_DIR}"
         IN_SOURCE_TYPE      "local"
         IN_TAG_PATTERN      "${TAG_PATTERN}"
-        IN_TAG_SORT_SUFFIX  "${TAG_SORT_SUFFIX}"
+        IN_TAG_SUFFIX       "${TAG_SUFFIX}"
         OUT_TAG             LATEST_POT_TAG)
 
 #]============================================================]
@@ -224,7 +224,7 @@ function(get_git_latest_tag_on_tag_pattern)
     set(ONE_VALUE_ARGS      IN_REPO_PATH 
                             IN_SOURCE_TYPE
                             IN_TAG_PATTERN 
-                            IN_TAG_SORT_SUFFIX
+                            IN_TAG_SUFFIX
                             OUT_TAG)
     set(MULTI_VALUE_ARGS)
     cmake_parse_arguments(GGLTTP 
@@ -298,7 +298,7 @@ function(get_git_latest_tag_on_tag_pattern)
     # Configures git version sort suffix.
     #
     execute_process(
-        COMMAND ${Git_EXECUTABLE} config versionsort.suffix "${GGLTTP_IN_TAG_SORT_SUFFIX}"
+        COMMAND ${Git_EXECUTABLE} config versionsort.suffix "${GGLTTP_IN_TAG_SUFFIX}"
         WORKING_DIRECTORY ${GGLTTP_IN_REPO_PATH}
         RESULT_VARIABLE RES_VAR
         OUTPUT_VARIABLE OUT_VAR OUTPUT_STRIP_TRAILING_WHITESPACE
