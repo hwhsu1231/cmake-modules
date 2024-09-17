@@ -5,6 +5,17 @@
 GitUtilities
 ------------
 
+.. command:: get_git_latest_branch_on_branch_pattern
+
+  .. code-block:: cmake
+
+    get_git_latest_branch_on_branch_pattern(
+        IN_REPO_PATH        "${PROJ_OUT_REPO_DIR}"
+        IN_SOURCE_TYPE      "local"
+        IN_BRANCH_PATTERN   "${BRANCH_PATTERN}"
+        IN_BRANCH_SUFFIX    "${BRANCH_SUFFIX}"
+        OUT_BRANCH          BRANCH_NAME)
+
 .. command:: get_git_latest_commit_on_branch_name
 
   .. code-block:: cmake
@@ -29,6 +40,140 @@ GitUtilities
         OUT_TAG             LATEST_POT_TAG)
 
 #]============================================================]
+
+
+function(get_git_latest_branch_on_branch_pattern)
+    #
+    # Parse arguments.
+    #
+    set(OPTIONS)
+    set(ONE_VALUE_ARGS      IN_REPO_PATH 
+                            IN_SOURCE_TYPE
+                            IN_BRANCH_PATTERN 
+                            IN_BRANCH_SUFFIX
+                            OUT_BRANCH)
+    set(MULTI_VALUE_ARGS)
+    cmake_parse_arguments(GGLBBP 
+        "${OPTIONS}"
+        "${ONE_VALUE_ARGS}"
+        "${MULTI_VALUE_ARGS}"
+        ${ARGN})
+    #
+    # Ensure all required arguments are provided.
+    #
+    set(REQUIRED_ARGS       IN_REPO_PATH 
+                            IN_BRANCH_PATTERN
+                            IN_SOURCE_TYPE 
+                            OUT_BRANCH)
+    foreach(ARG ${REQUIRED_ARGS})
+        if(NOT DEFINED GGLBBP_${ARG})
+            message(FATAL_ERROR "Missing ${ARG} argument.")
+        endif()
+    endforeach()
+    unset(ARG)
+    #
+    # Find Git executable if not exists.
+    #
+    if(NOT EXISTS "${Git_EXECUTABLE}")
+        find_package(Git QUIET MODULE REQUIRED)
+    endif()
+    #
+    # Determine the repository source.
+    # - If IN_SOURCE_TYPE is local,  then set GGLBBP_REPO_SOURCE to the local path of the repository.
+    # - If IN_SOURCE_TYPE is remote, then set GGLBBP_REPO_SOURCE to the remote url of the repository.
+    #
+    if(GGLBBP_IN_SOURCE_TYPE STREQUAL "local")
+        set(GGLBBP_REPO_SOURCE "${GGLBBP_IN_REPO_PATH}")
+    elseif(GGLBBP_IN_SOURCE_TYPE STREQUAL "remote")
+        execute_process(
+            COMMAND ${Git_EXECUTABLE} remote
+            WORKING_DIRECTORY ${GGLBBP_IN_REPO_PATH}
+            RESULT_VARIABLE RES_VAR
+            OUTPUT_VARIABLE OUT_VAR OUTPUT_STRIP_TRAILING_WHITESPACE
+            ERROR_VARIABLE  ERR_VAR ERROR_STRIP_TRAILING_WHITESPACE)
+        if(RES_VAR EQUAL 0)
+            set(GGLBBP_REPO_REMOTE_NAME "${OUT_VAR}")
+        else()
+            string(APPEND FAILURE_REASON
+            "The command failed with fatal errors.\n"
+            "    result:\n${RES_VAR}\n"
+            "    stdout:\n${OUT_VAR}\n"
+            "    stderr:\n${ERR_VAR}")
+            message(FATAL_ERROR "${FAILURE_REASON}")
+        endif()
+        execute_process(
+            COMMAND ${Git_EXECUTABLE} remote get-url ${GGLBBP_REPO_REMOTE_NAME}
+            WORKING_DIRECTORY ${GGLBBP_IN_REPO_PATH}
+            RESULT_VARIABLE RES_VAR
+            OUTPUT_VARIABLE OUT_VAR OUTPUT_STRIP_TRAILING_WHITESPACE
+            ERROR_VARIABLE  ERR_VAR ERROR_STRIP_TRAILING_WHITESPACE)
+        if(RES_VAR EQUAL 0)
+            set(GGLBBP_REPO_SOURCE "${OUT_VAR}")
+        else()
+            string(APPEND FAILURE_REASON
+            "The command failed with fatal errors.\n"
+            "    result:\n${RES_VAR}\n"
+            "    stdout:\n${OUT_VAR}\n"
+            "    stderr:\n${ERR_VAR}")
+            message(FATAL_ERROR "${FAILURE_REASON}")
+        endif()
+    else()
+        message(FATAL_ERROR "Invalid IN_SOURCE_TYPE argument. (${GGLBBP_IN_SOURCE_TYPE})")
+    endif()
+    #
+    # Configures git version sort suffix.
+    #
+    execute_process(
+        COMMAND ${Git_EXECUTABLE} config versionsort.suffix "${GGLBBP_IN_BRANCH_SUFFIX}"
+        WORKING_DIRECTORY ${GGLBBP_IN_REPO_PATH}
+        RESULT_VARIABLE RES_VAR
+        OUTPUT_VARIABLE OUT_VAR OUTPUT_STRIP_TRAILING_WHITESPACE
+        ERROR_VARIABLE  ERR_VAR ERROR_STRIP_TRAILING_WHITESPACE)
+    if(RES_VAR EQUAL 0)
+    else()
+        string(APPEND FAILURE_REASON
+        "The command failed with fatal errors.\n"
+        "    result:\n${RES_VAR}\n"
+        "    stdout:\n${OUT_VAR}\n"
+        "    stderr:\n${ERR_VAR}")
+        message(FATAL_ERROR "${FAILURE_REASON}")
+    endif()
+    #
+    # Get the list of branches matching the branch pattern.
+    #
+    execute_process(
+        COMMAND ${Git_EXECUTABLE} ls-remote
+                --refs
+                --heads
+                # --sort=-refname
+                --sort=-v:refname
+                ${GGLBBP_REPO_SOURCE}
+        WORKING_DIRECTORY ${GGLBBP_IN_REPO_PATH}
+        RESULT_VARIABLE RES_VAR
+        OUTPUT_VARIABLE OUT_VAR OUTPUT_STRIP_TRAILING_WHITESPACE
+        ERROR_VARIABLE  ERR_VAR ERROR_STRIP_TRAILING_WHITESPACE)
+    if(RES_VAR EQUAL 0)
+    else()
+        string(APPEND FAILURE_REASON
+        "The command failed with fatal errors.\n"
+        "    result:\n${RES_VAR}\n"
+        "    stdout:\n${OUT_VAR}\n"
+        "    stderr:\n${ERR_VAR}")
+        message(FATAL_ERROR "${FAILURE_REASON}")
+    endif()
+    string(REPLACE "\n" ";" BRANCH_LINES "${OUT_VAR}")
+    set(BRANCH_LIST "")
+    foreach(BRANCH_LINE ${BRANCH_LINES})
+        string(REGEX REPLACE "^[a-f0-9]+\trefs/heads/(.*)" "\\1" BRANCH_NAME "${BRANCH_LINE}")
+        list(APPEND BRANCH_LIST ${BRANCH_NAME})
+    endforeach()
+    list(FILTER BRANCH_LIST INCLUDE REGEX "${GGLBBP_IN_BRANCH_PATTERN}")
+    list(GET BRANCH_LIST 0 LATEST_BRANCH)
+    #
+    # Return the ${LATEST_BRANCH} on OUT_BRANCH.
+    #
+    set(${GGLBBP_OUT_BRANCH} "${LATEST_BRANCH}" PARENT_SCOPE)
+endfunction()
 
 
 function(get_git_latest_commit_on_branch_name)
