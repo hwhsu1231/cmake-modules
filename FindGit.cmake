@@ -1,7 +1,7 @@
 # Distributed under the OSI-approved BSD 3-Clause License.
 # See accompanying file LICENSE.txt for details.
 
-#[=======================================================================[.rst:
+#[=================================================================================[.rst:
 FindGit
 -------
 
@@ -42,7 +42,7 @@ Hints
 ``Git_ROOT_DIR``, ``ENV{Git_ROOT_DIR}``
   Define the root directory of a Git installation.
 
-#]=======================================================================]
+#]=================================================================================]
 
 set(_Git_SEARCH_HINTS 
     ${Git_ROOT_DIR} 
@@ -91,8 +91,7 @@ if(Git_FOUND)
         if(NOT TARGET Git::Git)
             add_executable(Git::Git IMPORTED)
             set_target_properties(Git::Git PROPERTIES
-                IMPORTED_LOCATION "${Git_EXECUTABLE}"
-            )
+                IMPORTED_LOCATION "${Git_EXECUTABLE}")
         endif()
     endif()
     unset(_Git_CMAKE_ROLE)

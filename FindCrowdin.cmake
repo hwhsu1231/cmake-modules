@@ -1,7 +1,7 @@
 # Distributed under the OSI-approved BSD 3-Clause License.
 # See accompanying file LICENSE.txt for details.
 
-#[=======================================================================[.rst:
+#[=================================================================================[.rst:
 FindCrowdin
 -----------
 
@@ -42,7 +42,7 @@ Hints
 ``Crowdin_ROOT_DIR``, ``ENV{Crowdin_ROOT_DIR}``
   Define the root directory of a Crowdin installation.
 
-#]=======================================================================]
+#]=================================================================================]
 
 if(WIN32)
     set(_CROWDIN_NAME "crowdin.bat;crowdin.cmd")
@@ -102,7 +102,8 @@ find_package_handle_standard_args(Crowdin
     FOUND_VAR
         Crowdin_FOUND
     FAIL_MESSAGE
-        "Failed to locate crowdin executable")
+        "Failed to locate crowdin executable"
+    HANDLE_VERSION_RANGE)
 
 if(Crowdin_FOUND)
     get_property(_Crowdin_CMAKE_ROLE GLOBAL PROPERTY CMAKE_ROLE)

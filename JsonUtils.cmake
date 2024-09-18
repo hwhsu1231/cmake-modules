@@ -1,7 +1,7 @@
 # Distributed under the OSI-approved BSD 3-Clause License.
 # See accompanying file LICENSE.txt for details.
 
-#[============================================================[.rst
+#[================================================================================[.rst
 JsonUtils
 ---------
 
@@ -119,23 +119,23 @@ Dot Notation Setter/Getter
         IN_DOT_NOTATION   "pot"
         OUT_VALUE         potValue)
 
-#]============================================================]
+#]================================================================================]
 
 
 #
-# Initialize a references.json file
+# Initialize a references.json file.
 #
 function(init_references_json_file)
     #
     # Parse arguments.
     #
     set(OPTIONS)
-    set(ONE_VALUE_ARGS    IN_FILEPATH
-                          IN_VERSION
-                          IN_TYPE
-                          IN_MODE)
-    set(MULTI_VALUE_ARGS  IN_LANGUAGE
-                          IN_REPOSITORY)
+    set(ONE_VALUE_ARGS      IN_FILEPATH
+                            IN_VERSION
+                            IN_TYPE
+                            IN_MODE)
+    set(MULTI_VALUE_ARGS    IN_LANGUAGE
+                            IN_REPOSITORY)
     cmake_parse_arguments(IRJF
         "${OPTIONS}"
         "${ONE_VALUE_ARGS}"
@@ -597,10 +597,10 @@ function(set_members_of_commit_json_object)
     # Parse arguments.
     #
     set(OPTIONS)
-    set(ONE_VALUE_ARGS    IN_MEMBER_DATE 
-                          IN_MEMBER_HASH 
-                          IN_MEMBER_TITLE 
-                          OUT_JSON_OBJECT)
+    set(ONE_VALUE_ARGS      IN_MEMBER_DATE 
+                            IN_MEMBER_HASH 
+                            IN_MEMBER_TITLE 
+                            OUT_JSON_OBJECT)
     set(MULTI_VALUE_ARGS)
     cmake_parse_arguments(SMOCJO 
         "${OPTIONS}" 
@@ -639,11 +639,11 @@ function(set_members_of_reference_json_object)
     # Parse arguments.
     #
     set(OPTIONS)
-    set(ONE_VALUE_ARGS    IN_TYPE
-                          IN_MEMBER_BRANCH
-                          IN_MEMBER_COMMIT
-                          IN_MEMBER_TAG  
-                          OUT_JSON_OBJECT)
+    set(ONE_VALUE_ARGS      IN_TYPE
+                            IN_MEMBER_BRANCH
+                            IN_MEMBER_COMMIT
+                            IN_MEMBER_TAG  
+                            OUT_JSON_OBJECT)
     set(MULTI_VALUE_ARGS)
     cmake_parse_arguments(SMORJO 
         "${OPTIONS}"
@@ -707,11 +707,11 @@ function(set_json_value_by_dot_notation)
     # Parse arguments.
     #
     set(OPTIONS)
-    set(ONE_VALUE_ARGS    ERROR_VARIABLE
-                          IN_JSON_OBJECT 
-                          IN_DOT_NOTATION 
-                          IN_JSON_VALUE 
-                          OUT_JSON_OBJECT)
+    set(ONE_VALUE_ARGS      ERROR_VARIABLE
+                            IN_JSON_OBJECT 
+                            IN_DOT_NOTATION 
+                            IN_JSON_VALUE 
+                            OUT_JSON_OBJECT)
     set(MULTI_VALUE_ARGS)
     cmake_parse_arguments(SJVBDN 
         "${OPTIONS}" 
@@ -721,10 +721,10 @@ function(set_json_value_by_dot_notation)
     #
     # Ensure all required arguments are provided.
     #
-    set(REQUIRED_ARGS     IN_JSON_OBJECT
-                          IN_DOT_NOTATION
-                          IN_JSON_VALUE
-                          OUT_JSON_OBJECT)
+    set(REQUIRED_ARGS       IN_JSON_OBJECT
+                            IN_DOT_NOTATION
+                            IN_JSON_VALUE
+                            OUT_JSON_OBJECT)
     foreach(_ARG ${REQUIRED_ARGS})
         if(NOT DEFINED SJVBDN_${_ARG})
             message(FATAL_ERROR "Missing SJVBDN_${_ARG} argument.")
@@ -765,7 +765,7 @@ function(set_json_value_by_dot_notation)
         string(FIND "${CUR_PATH}" "." DOT_POS)
         math(EXPR DOT_NEXT_POS "${DOT_POS} + 1")
         string(SUBSTRING "${CUR_PATH}" 0 ${DOT_POS}       CUR_NAME)
-        string(SUBSTRING "${CUR_PATH}" ${DOT_NEXT_POS} -1 CUR_PATH)        
+        string(SUBSTRING "${CUR_PATH}" ${DOT_NEXT_POS} -1 CUR_PATH)
         string(JSON CUR_JSON ERROR_VARIABLE ERR_VAR GET "${CUR_JSON}" "${CUR_NAME}")
         if(CUR_JSON MATCHES "NOTFOUND$")
             #
@@ -843,10 +843,10 @@ function(get_json_value_by_dot_notation)
     # Parse arguments.
     #
     set(OPTIONS)
-    set(ONE_VALUE_ARGS    ERROR_VARIABLE
-                          IN_JSON_OBJECT 
-                          IN_DOT_NOTATION 
-                          OUT_JSON_VALUE)
+    set(ONE_VALUE_ARGS      ERROR_VARIABLE
+                            IN_JSON_OBJECT 
+                            IN_DOT_NOTATION 
+                            OUT_JSON_VALUE)
     set(MULTI_VALUE_ARGS)
     cmake_parse_arguments(GJVBDN 
         "${OPTIONS}" 
@@ -856,9 +856,9 @@ function(get_json_value_by_dot_notation)
     #
     # Ensure all required arguments are provided.
     #
-    set(REQUIRED_ARGS     IN_JSON_OBJECT 
-                          IN_DOT_NOTATION 
-                          OUT_JSON_VALUE)
+    set(REQUIRED_ARGS       IN_JSON_OBJECT 
+                            IN_DOT_NOTATION 
+                            OUT_JSON_VALUE)
     foreach(_ARG ${REQUIRED_ARGS})
         if(NOT DEFINED GJVBDN_${_ARG})
             message(FATAL_ERROR "Missing GJVBDN_${_ARG} argument.")

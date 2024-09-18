@@ -1,7 +1,7 @@
 # Distributed under the OSI-approved BSD 3-Clause License.
 # See accompanying file LICENSE.txt for details.
 
-#[=======================================================================[.rst:
+#[=================================================================================[.rst:
 FindDoxygen
 -----------
 
@@ -44,7 +44,7 @@ Hints
 ``Doxygen_ROOT_DIR``, ``ENV{Doxygen_ROOT_DIR}``
   Define the root directory of a Doxygen installation.
 
-#]=======================================================================]
+#]=================================================================================]
 
 set(_Doxygen_SEARCH_HINTS 
     ${Doxygen_ROOT_DIR} 
@@ -81,11 +81,11 @@ if(Doxygen_EXECUTABLE)
         # Set Doxygen_FOUND to FALSE when 'doxygen --version' is broken.
         set(Doxygen_FOUND FALSE)
         string(APPEND _Doxygen_FAILURE_REASON
-        "The command\n"
-        "      \"${Doxygen_EXECUTABLE}\" --version\n"
-        "    failed with result: \n${_Doxygen_VERSION_RESULT}\n"
-        "    stdout:\n${_Doxygen_VERSION_OUTPUT}\n"
-        "    stderr:\n${_Doxygen_VERSION_ERROR}")
+        "The command\n\n"
+        "      \"${Doxygen_EXECUTABLE}\" --version\n\n"
+        "    failed with result: \n\n${_Doxygen_VERSION_RESULT}\n\n"
+        "    stdout:\n\n${_Doxygen_VERSION_OUTPUT}\n\n"
+        "    stderr:\n\n${_Doxygen_VERSION_ERROR}")
     endif()
 endif()
 
@@ -101,7 +101,7 @@ find_package_handle_standard_args(Doxygen
         Doxygen_FOUND
     REASON_FAILURE_MESSAGE
         "${_Doxygen_FAILURE_REASON}"
-    HANDLE_RANGE)
+    HANDLE_VERSION_RANGE)
 
 if(Doxygen_FOUND)
     get_property(_Doxygen_CMAKE_ROLE GLOBAL PROPERTY CMAKE_ROLE)

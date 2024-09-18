@@ -1,7 +1,7 @@
 # Distributed under the OSI-approved BSD 3-Clause License.
 # See accompanying file LICENSE.txt for details.
 
-#[=======================================================================[.rst:
+#[=================================================================================[.rst:
 FindGettext
 -----------
 
@@ -125,7 +125,7 @@ Hints
 ``Gettext_ROOT_DIR``, ``ENV{Gettext_ROOT_DIR}``
   Define the root directory of a Gettext installation.
 
-#]=======================================================================]
+#]=================================================================================]
 
 set(_Gettext_KNOWN_COMPONENTS
     Xgettext
@@ -195,11 +195,11 @@ if(Gettext_XGETTEXT_EXECUTABLE)
         # Set Gettext_Xgettext_FOUND to FALSE when 'xgettext --version' is broken.
         set(Gettext_Xgettext_FOUND FALSE)
         string(APPEND _Gettext_FAILURE_REASON
-        "The command\n"
-        "      \"${Gettext_XGETTEXT_EXECUTABLE}\" --version\n"
-        "    failed with result: \n${_XGETTEXT_VERSION_RESULT}\n"
-        "    stdout:\n${_XGETTEXT_VERSION_OUTPUT}\n"
-        "    stderr:\n${_XGETTEXT_VERSION_ERROR}")
+        "The command\n\n"
+        "      \"${Gettext_XGETTEXT_EXECUTABLE}\" --version\n\n"
+        "    failed with result: \n\n${_XGETTEXT_VERSION_RESULT}\n\n"
+        "    stdout:\n\n${_XGETTEXT_VERSION_OUTPUT}\n\n"
+        "    stderr:\n\n${_XGETTEXT_VERSION_ERROR}")
     endif()
 endif()
 

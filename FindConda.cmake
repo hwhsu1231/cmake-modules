@@ -1,7 +1,7 @@
 # Distributed under the OSI-approved BSD 3-Clause License.
 # See accompanying file LICENSE.txt for details.
 
-#[=======================================================================[.rst:
+#[=================================================================================[.rst:
 FindConda
 -----------
 
@@ -42,7 +42,7 @@ Hints
 ``Conda_ROOT_DIR``, ``ENV{Conda_ROOT_DIR}``
   Define the root directory of a Conda installation.
 
-#]=======================================================================]
+#]=================================================================================]
 
 if(CMAKE_HOST_WIN32)
     set(_CONDA_NAME "conda.bat;conda.exe")
@@ -93,7 +93,8 @@ find_package_handle_standard_args(Conda
     FOUND_VAR
         Conda_FOUND
     FAIL_MESSAGE
-        "Failed to locate conda executable")
+        "Failed to locate conda executable"
+    HANDLE_VERSION_RANGE)
 
 if(Conda_FOUND)
     get_property(_Conda_CMAKE_ROLE GLOBAL PROPERTY CMAKE_ROLE)

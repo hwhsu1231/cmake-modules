@@ -147,11 +147,11 @@ if(Sphinx_BUILD_EXECUTABLE)
         # Set Sphinx_Build_FOUND to FALSE when sphinx-build is broken.
         set(Sphinx_Build_FOUND FALSE)
         string(APPEND _Sphinx_FAILURE_REASON
-        "The command\n"
-        "      \"${Sphinx_BUILD_EXECUTABLE}\" --version\n"
-        "    failed with result: \n${_Sphinx_VERSION_RESULT}\n"
-        "    stdout:\n${_Sphinx_VERSION_OUTPUT}\n"
-        "    stderr:\n${_Sphinx_VERSION_ERROR}")
+        "The command\n\n"
+        "      \"${Sphinx_BUILD_EXECUTABLE}\" --version\n\n"
+        "    failed with result: \n\n${_Sphinx_VERSION_RESULT}\n\n"
+        "    stdout:\n\n${_Sphinx_VERSION_OUTPUT}\n\n"
+        "    stderr:\n\n${_Sphinx_VERSION_ERROR}")
     endif()
 endif()
 
