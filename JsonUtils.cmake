@@ -122,6 +122,9 @@ Dot Notation Setter/Getter
 #]================================================================================]
 
 
+include_guard()
+
+
 #
 # Initialize a references.json file.
 #

@@ -42,6 +42,9 @@ GitUtilities
 #]============================================================]
 
 
+include_guard()
+
+
 function(get_git_latest_branch_on_branch_pattern)
     #
     # Parse arguments.
