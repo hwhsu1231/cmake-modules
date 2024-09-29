@@ -119,10 +119,59 @@ Dot Notation Setter/Getter
         IN_DOT_NOTATION   "pot"
         OUT_VALUE         potValue)
 
+Get Reference of Latest and Current from Json
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+  .. code-block:: cmake
+
+    get_reference_of_latest_and_current_from_json(
+        IN_JSON_CNT             "${REFERENCES_JSON_CNT}"
+        IN_REPO_PATH            "${PROJ_OUT_REPO_DIR}"
+        IN_DOT_NOTATION         ".pot"
+        IN_VERSION_TYPE         "${VERSION_TYPE}"
+        IN_BRANCH_NAME          "${BRANCH_NAME}"
+        IN_TAG_PATTERN          "${TAG_PATTERN}"
+        IN_TAG_SUFFIX           "${TAG_SUFFIX}"
+        OUT_LATEST_OBJECT       LATEST_POT_OBJECT
+        OUT_LATEST_REFERENCE    LATEST_POT_REFERENCE
+        OUT_CURRENT_OBJECT      CURRENT_POT_OBJECT
+        OUT_CURRENT_REFERENCE   CURRENT_POT_REFERENCE)
+
+  .. code-block:: cmake
+
+    get_reference_of_latest_and_current_from_json(
+        IN_JSON_CNT            "${REFERENCES_JSON_CNT}"
+        IN_REPO_PATH            "${PROJ_OUT_REPO_DIR}"
+        IN_DOT_NOTATION         ".conan"
+        IN_VERSION_TYPE         "${VERSION_TYPE}"
+        IN_BRANCH_NAME          "${BRANCH_NAME}"
+        IN_TAG_PATTERN          "${TAG_PATTERN}"
+        IN_TAG_SUFFIX           "${TAG_SUFFIX}"
+        OUT_LATEST_OBJECT       LATEST_CONAN_OBJECT
+        OUT_LATEST_REFERENCE    LATEST_CONAN_REFERENCE
+        OUT_CURRENT_OBJECT      CURRENT_CONAN_OBJECT
+        OUT_CURRENT_REFERENCE   CURRENT_CONAN_REFERENCE)
+
+Get Reference of POT and PO from Json
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+  .. code-block:: cmake
+
+    get_reference_of_pot_and_po_from_json(
+        IN_JSON_CNT             "${REFERENCES_JSON_CNT}"
+        IN_VERSION_TYPE         "${VERSION_TYPE}"
+        OUT_POT_OBJECT          CURRENT_POT_OBJECT
+        OUT_POT_REFERENCE       CURRENT_POT_REFERENCE
+        OUT_PO_OBJECT           CURRENT_PO_OBJECT
+        OUT_PO_REFERENCE        CURRENT_PO_REFERENCE)
+
 #]================================================================================]
 
 
 include_guard()
+
+
+include(GitUtils)
 
 
 #
@@ -948,3 +997,190 @@ function(get_json_value_by_dot_notation)
     set(${GJVBDN_ERROR_VARIABLE} "NOTFOUND" PARENT_SCOPE)
     set(${GJVBDN_OUT_JSON_VALUE} "${CUR_JSON}" PARENT_SCOPE)
 endfunction()
+
+
+#
+# Get Reference of Latest and Current from Json.
+#
+function(get_reference_of_latest_and_current_from_json)
+    #
+    # Parse arguments.
+    #
+    set(OPTIONS)
+    set(ONE_VALUE_ARGS      IN_JSON_CNT
+                            IN_REPO_PATH
+                            IN_DOT_NOTATION
+                            IN_VERSION_TYPE
+                            IN_BRANCH_NAME
+                            IN_TAG_PATTERN
+                            IN_TAG_SUFFIX
+                            OUT_LATEST_OBJECT
+                            OUT_LATEST_REFERENCE
+                            OUT_CURRENT_OBJECT
+                            OUT_CURRENT_REFERENCE)
+    set(MULTI_VALUE_ARGS)
+    cmake_parse_arguments(GRLCJ
+        "${OPTIONS}"
+        "${ONE_VALUE_ARGS}"
+        "${MULTI_VALUE_ARGS}"
+        ${ARGN})
+    #
+    # Ensure all required arguments are provided.
+    #
+    set(REQUIRED_ARGS       IN_JSON_CNT
+                            IN_REPO_PATH
+                            IN_DOT_NOTATION
+                            IN_VERSION_TYPE)
+    foreach(ARG ${REQUIRED_ARGS})
+        if(NOT DEFINED GRLCJ_${ARG})
+            message(FATAL_ERROR "Missing ${ARG} argument.")
+        endif()
+    endforeach()
+    unset(ARG)
+    #
+    # 
+    #
+    get_json_value_by_dot_notation(
+        IN_JSON_OBJECT                  "${GRLCJ_IN_JSON_CNT}"
+        IN_DOT_NOTATION                 "${GRLCJ_IN_DOT_NOTATION}"
+        OUT_JSON_VALUE                  CURRENT_OBJECT)
+    if(GRLCJ_IN_VERSION_TYPE STREQUAL "branch")
+        get_json_value_by_dot_notation(
+            IN_JSON_OBJECT              "${CURRENT_OBJECT}"
+            IN_DOT_NOTATION             ".commit.hash"
+            OUT_JSON_VALUE              CURRENT_COMMIT_HASH)
+        get_git_latest_commit_on_branch_name(
+            IN_REPO_PATH                "${GRLCJ_IN_REPO_PATH}"
+            IN_SOURCE_TYPE              "local"
+            IN_BRANCH_NAME              "${GRLCJ_IN_BRANCH_NAME}"
+            OUT_COMMIT_DATE             LATEST_COMMIT_DATE
+            OUT_COMMIT_HASH             LATEST_COMMIT_HASH
+            OUT_COMMIT_TITLE            LATEST_COMMIT_TITLE)
+        set_members_of_commit_json_object(
+            IN_MEMBER_DATE              "\"${LATEST_COMMIT_DATE}\""
+            IN_MEMBER_HASH              "\"${LATEST_COMMIT_HASH}\""
+            IN_MEMBER_TITLE             "\"${LATEST_COMMIT_TITLE}\""
+            OUT_JSON_OBJECT             COMMIT_CNT)
+        set_members_of_reference_json_object(
+            IN_TYPE                     "branch"
+            IN_MEMBER_BRANCH            "\"${GRLCJ_IN_BRANCH_NAME}\""
+            IN_MEMBER_COMMIT            "${COMMIT_CNT}"
+            OUT_JSON_OBJECT             LATEST_OBJECT)
+        set(LATEST_REFERENCE            "${LATEST_COMMIT_HASH}")
+        set(CURRENT_REFERENCE           "${CURRENT_COMMIT_HASH}")
+    elseif(GRLCJ_IN_VERSION_TYPE STREQUAL "type")
+        get_json_value_by_dot_notation(
+            IN_JSON_OBJECT              "${CURRENT_OBJECT}"
+            IN_DOT_NOTATION             ".tag"
+            OUT_JSON_VALUE              CURRENT_TAG)
+        get_git_latest_tag_on_tag_pattern(
+            IN_REPO_PATH                "${PROJ_OUT_REPO_DIR}"
+            IN_SOURCE_TYPE              "local"
+            IN_TAG_PATTERN              "${GRLCJ_IN_TAG_PATTERN}"
+            IN_TAG_SUFFIX               "${GRLCJ_IN_TAG_SUFFIX}"
+            OUT_TAG                     LATEST_TAG)
+        set_members_of_reference_json_object(
+            IN_TYPE                     "tag"
+            IN_MEMBER_TAG               "\"${LATEST_TAG}\""
+            OUT_JSON_OBJECT             LATEST_OBJECT)
+        set(LATEST_REFERENCE            "${LATEST_TAG}")
+        set(CURRENT_REFERENCE           "${CURRENT_TAG}")
+    else()
+        message(FATAL_ERROR "Invalid IN_VERSION_TYPE value. (${GRLCJ_IN_VERSION_TYPE})")
+    endif()
+    #
+    # Return the content of ${CURRENT_OBJECT}     to OUT_CURRENT_OBJECT.
+    # Return the content of ${CURRENT_REFERENCE}  to OUT_CURRENT_REFERENCE.
+    # Return the content of ${LATEST_OBJECT}      to OUT_LATEST_OBJECT.
+    # Return the content of ${LATEST_REFERENCE}   to OUT_LATEST_REFERENCE.
+    #
+    if(GRLCJ_OUT_CURRENT_OBJECT)
+        set(${GRLCJ_OUT_CURRENT_OBJECT} "${CURRENT_OBJECT}" PARENT_SCOPE)
+    endif()
+    if(GRLCJ_OUT_CURRENT_REFERENCE)
+        set(${GRLCJ_OUT_CURRENT_REFERENCE} "${CURRENT_REFERENCE}" PARENT_SCOPE)
+    endif()
+    if(GRLCJ_OUT_LATEST_OBJECT)
+        set(${GRLCJ_OUT_LATEST_OBJECT} "${LATEST_OBJECT}" PARENT_SCOPE)
+    endif()
+    if(GRLCJ_OUT_LATEST_REFERENCE)
+        set(${GRLCJ_OUT_LATEST_REFERENCE} "${LATEST_REFERENCE}" PARENT_SCOPE)
+    endif()
+endfunction()
+
+
+#
+# Get Reference of POT and PO from Json.
+#
+function(get_reference_of_pot_and_po_from_json)
+    #
+    # Parse arguments.
+    #
+    set(OPTIONS)
+    set(ONE_VALUE_ARGS      IN_JSON_CNT
+                            IN_VERSION_TYPE
+                            OUT_POT_OBJECT
+                            OUT_POT_REFERENCE
+                            OUT_PO_OBJECT
+                            OUT_PO_REFERENCE)
+    set(MULTI_VALUE_ARGS)
+    cmake_parse_arguments(GRPPJ
+        "${OPTIONS}"
+        "${ONE_VALUE_ARGS}"
+        "${MULTI_VALUE_ARGS}"
+        ${ARGN})
+    #
+    # Ensure all required arguments are provided.
+    #
+    set(REQUIRED_ARGS       IN_JSON_CNT
+                            IN_VERSION_TYPE)
+    foreach(ARG ${REQUIRED_ARGS})
+        if(NOT DEFINED GRPPJ_${ARG})
+            message(FATAL_ERROR "Missing ${ARG} argument.")
+        endif()
+    endforeach()
+    unset(ARG)
+    #
+    #
+    #
+    get_json_value_by_dot_notation(
+        IN_JSON_OBJECT              "${GRPPJ_IN_JSON_CNT}"
+        IN_DOT_NOTATION             ".pot"
+        OUT_JSON_VALUE              POT_OBJECT)
+    get_json_value_by_dot_notation(
+        IN_JSON_OBJECT              "${GRPPJ_IN_JSON_CNT}"
+        IN_DOT_NOTATION             ".po.${_LANGUAGE}"
+        OUT_JSON_VALUE              PO_OBJECT)
+    if(GRPPJ_IN_VERSION_TYPE STREQUAL "branch")
+        set(DOT_NOTATION            ".commit.hash")
+    else()
+        set(DOT_NOTATION            ".tag")
+    endif()
+    get_json_value_by_dot_notation(
+        IN_JSON_OBJECT              "${POT_OBJECT}"
+        IN_DOT_NOTATION             "${DOT_NOTATION}"
+        OUT_JSON_VALUE              POT_REFERENCE)
+    get_json_value_by_dot_notation(
+        IN_JSON_OBJECT              "${PO_OBJECT}"
+        IN_DOT_NOTATION             "${DOT_NOTATION}"
+        OUT_JSON_VALUE              PO_REFERENCE)
+    #
+    # Return the content of ${POT_OBJECT}     to OUT_POT_OBJECT.
+    # Return the content of ${POT_REFERENCE}  to OUT_POT_REFERENCE.
+    # Return the content of ${PO_OBJECT}      to OUT_PO_OBJECT.
+    # Return the content of ${PO_REFERENCE}   to OUT_PO_REFERENCE.
+    #
+    if(GRPPJ_OUT_POT_OBJECT)
+        set(${GRPPJ_OUT_POT_OBJECT} "${POT_OBJECT}" PARENT_SCOPE)
+    endif()
+    if(GRPPJ_OUT_POT_REFERENCE)
+        set(${GRPPJ_OUT_POT_REFERENCE} "${POT_REFERENCE}" PARENT_SCOPE)
+    endif()
+    if(GRPPJ_OUT_PO_OBJECT)
+        set(${GRPPJ_OUT_PO_OBJECT} "${PO_OBJECT}" PARENT_SCOPE)
+    endif()
+    if(GRPPJ_OUT_PO_REFERENCE)
+        set(${GRPPJ_OUT_PO_REFERENCE} "${PO_REFERENCE}" PARENT_SCOPE)
+    endif()
+endfunction()
+
