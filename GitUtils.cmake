@@ -39,10 +39,22 @@ GitUtilities
         IN_TAG_SUFFIX       "${TAG_SUFFIX}"
         OUT_TAG             LATEST_POT_TAG)
 
+.. command:: switch_to_git_reference_on_branch
+
+  .. code-block:: cmake
+
+    switch_to_git_reference_on_branch(
+        IN_REPO_PATH        "${PROJ_OUT_REPO_DIR}"
+        IN_REFERENCE        "${SWITCH_REFERENCE}"
+        IN_BRANCH           "current")
+
 #]============================================================]
 
 
 include_guard()
+
+
+include(JsonUtils)
 
 
 function(get_git_latest_branch_on_branch_pattern)
@@ -546,4 +558,101 @@ function(get_git_latest_tag_on_tag_pattern)
     # Return the ${LATEST_TAG} on OUT_TAG.
     #
     set(${GGLTTP_OUT_TAG} "${LATEST_TAG}" PARENT_SCOPE)
+endfunction()
+
+
+function(switch_to_git_reference_on_branch)
+    #
+    # Parse arguments.
+    #
+    set(OPTIONS)
+    set(ONE_VALUE_ARGS      IN_REPO_PATH
+                            IN_REFERENCE
+                            IN_BRANCH)
+    set(MULTI_VALUE_ARGS)
+    cmake_parse_arguments(SGRB 
+        "${OPTIONS}"
+        "${ONE_VALUE_ARGS}"
+        "${MULTI_VALUE_ARGS}"
+        ${ARGN})
+    #
+    # Ensure all required arguments are provided.
+    #
+    set(REQUIRED_ARGS       IN_REPO_PATH
+                            IN_REFERENCE
+                            IN_BRANCH)
+    foreach(ARG ${REQUIRED_ARGS})
+        if(NOT DEFINED SGRB_${ARG})
+            message(FATAL_ERROR "Missing ${ARG} argument.")
+        endif()
+    endforeach()
+    unset(ARG)
+    #
+    # Find Git executable if not exists.
+    #
+    if(NOT EXISTS "${Git_EXECUTABLE}")
+        find_package(Git QUIET MODULE REQUIRED)
+    endif()
+    #
+    # Switch to ${SGRB_IN_REFERENCE} on branch ${SGRB_IN_BRANCH}.
+    #
+    if(EXISTS "${SGRB_IN_REPO_PATH}/.gitmodules")
+        execute_process(
+            COMMAND ${Git_EXECUTABLE} submodule deinit --all --force
+            WORKING_DIRECTORY ${SGRB_IN_REPO_PATH}
+            ECHO_OUTPUT_VARIABLE
+            ECHO_ERROR_VARIABLE
+            COMMAND_ERROR_IS_FATAL ANY)
+        message("")
+        execute_process(
+            COMMAND ${CMAKE_COMMAND} -E rm -rf .git/modules
+            WORKING_DIRECTORY ${SGRB_IN_REPO_PATH}
+            ECHO_OUTPUT_VARIABLE
+            ECHO_ERROR_VARIABLE
+            COMMAND_ERROR_IS_FATAL ANY)
+        message("Removed directory '.git/modules'")
+        message("")
+    endif()
+    execute_process(
+        COMMAND ${Git_EXECUTABLE} checkout -B ${SGRB_IN_BRANCH}
+        WORKING_DIRECTORY ${SGRB_IN_REPO_PATH}
+        ECHO_OUTPUT_VARIABLE
+        ECHO_ERROR_VARIABLE
+        COMMAND_ERROR_IS_FATAL ANY)
+    message("")
+    execute_process(
+        COMMAND ${Git_EXECUTABLE} fetch origin
+                ${SGRB_IN_REFERENCE}
+                --depth=1
+                --verbose
+        WORKING_DIRECTORY ${SGRB_IN_REPO_PATH}
+        ECHO_OUTPUT_VARIABLE
+        ECHO_ERROR_VARIABLE
+        COMMAND_ERROR_IS_FATAL ANY)
+    message("")
+    execute_process(
+        COMMAND ${Git_EXECUTABLE} reset --hard FETCH_HEAD
+        WORKING_DIRECTORY ${SGRB_IN_REPO_PATH}
+        ECHO_OUTPUT_VARIABLE
+        ECHO_ERROR_VARIABLE
+        COMMAND_ERROR_IS_FATAL ANY)
+    if(EXISTS "${SGRB_IN_REPO_PATH}/.gitmodules")
+        message("")
+        execute_process(
+            COMMAND ${Git_EXECUTABLE} submodule sync
+            WORKING_DIRECTORY ${SGRB_IN_REPO_PATH}
+            ECHO_OUTPUT_VARIABLE
+            ECHO_ERROR_VARIABLE
+            COMMAND_ERROR_IS_FATAL ANY)
+        message("")
+        execute_process(
+            COMMAND ${Git_EXECUTABLE} submodule update
+                    --init
+                    --recursive
+                    --depth=1
+            WORKING_DIRECTORY ${SGRB_IN_REPO_PATH}
+            ECHO_OUTPUT_VARIABLE
+            ECHO_ERROR_VARIABLE
+            COMMAND_ERROR_IS_FATAL ANY)
+    endif()
 endfunction()
