@@ -124,7 +124,7 @@ Get Reference of Latest and Current from Json
 
   .. code-block:: cmake
 
-    get_reference_of_latest_and_current_from_json(
+    get_reference_of_latest_from_repo_and_current_from_json(
         IN_JSON_CNT             "${REFERENCES_JSON_CNT}"
         IN_REPO_PATH            "${PROJ_OUT_REPO_DIR}"
         IN_DOT_NOTATION         ".pot"
@@ -139,7 +139,7 @@ Get Reference of Latest and Current from Json
 
   .. code-block:: cmake
 
-    get_reference_of_latest_and_current_from_json(
+    get_reference_of_latest_from_repo_and_current_from_json(
         IN_JSON_CNT            "${REFERENCES_JSON_CNT}"
         IN_REPO_PATH            "${PROJ_OUT_REPO_DIR}"
         IN_DOT_NOTATION         ".conan"
@@ -551,7 +551,7 @@ macro(_init_references_json_file_for_branch_repository)
                 elseif (REF_PROP_TYPE STREQUAL "OBJECT")
                     set(${REF_PROP_NAME}_CNT "{}")
                 endif()
-                string(JSON ${_REPO}_CNT 
+                string(JSON ${_REPO}_CNT
                     SET "${${_REPO}_CNT}" "${REF_PROP_NAME}" "${${REF_PROP_NAME}_CNT}")
             endif()
             if(REF_PROP_NAME STREQUAL "commit")
@@ -591,14 +591,14 @@ function(get_members_of_json_object)
     #
     set(OPTIONS)
     set(ONE_VALUE_ARGS      IN_JSON_OBJECT
-                            OUT_MEMBER_NAMES 
+                            OUT_MEMBER_NAMES
                             OUT_MEMBER_VALUES
                             OUT_MEMBER_NUMBER)
     set(MULTI_VALUE_ARGS)
-    cmake_parse_arguments(GMOJO 
-        "${OPTIONS}" 
-        "${ONE_VALUE_ARGS}" 
-        "${MULTI_VALUE_ARGS}" 
+    cmake_parse_arguments(GMOJO
+        "${OPTIONS}"
+        "${ONE_VALUE_ARGS}"
+        "${MULTI_VALUE_ARGS}"
         ${ARGN})
     #
     # Ensure all required arguments are provided.
@@ -649,15 +649,15 @@ function(set_members_of_commit_json_object)
     # Parse arguments.
     #
     set(OPTIONS)
-    set(ONE_VALUE_ARGS      IN_MEMBER_DATE 
-                            IN_MEMBER_HASH 
-                            IN_MEMBER_TITLE 
+    set(ONE_VALUE_ARGS      IN_MEMBER_DATE
+                            IN_MEMBER_HASH
+                            IN_MEMBER_TITLE
                             OUT_JSON_OBJECT)
     set(MULTI_VALUE_ARGS)
-    cmake_parse_arguments(SMOCJO 
-        "${OPTIONS}" 
-        "${ONE_VALUE_ARGS}" 
-        "${MULTI_VALUE_ARGS}" 
+    cmake_parse_arguments(SMOCJO
+        "${OPTIONS}"
+        "${ONE_VALUE_ARGS}"
+        "${MULTI_VALUE_ARGS}"
         ${ARGN})
     #
     # Validate required arguments.
@@ -694,10 +694,10 @@ function(set_members_of_reference_json_object)
     set(ONE_VALUE_ARGS      IN_TYPE
                             IN_MEMBER_BRANCH
                             IN_MEMBER_COMMIT
-                            IN_MEMBER_TAG  
+                            IN_MEMBER_TAG
                             OUT_JSON_OBJECT)
     set(MULTI_VALUE_ARGS)
-    cmake_parse_arguments(SMORJO 
+    cmake_parse_arguments(SMORJO
         "${OPTIONS}"
         "${ONE_VALUE_ARGS}"
         "${MULTI_VALUE_ARGS}"
@@ -760,15 +760,15 @@ function(set_json_value_by_dot_notation)
     #
     set(OPTIONS)
     set(ONE_VALUE_ARGS      ERROR_VARIABLE
-                            IN_JSON_OBJECT 
-                            IN_DOT_NOTATION 
-                            IN_JSON_VALUE 
+                            IN_JSON_OBJECT
+                            IN_DOT_NOTATION
+                            IN_JSON_VALUE
                             OUT_JSON_OBJECT)
     set(MULTI_VALUE_ARGS)
-    cmake_parse_arguments(SJVBDN 
-        "${OPTIONS}" 
-        "${ONE_VALUE_ARGS}" 
-        "${MULTI_VALUE_ARGS}" 
+    cmake_parse_arguments(SJVBDN
+        "${OPTIONS}"
+        "${ONE_VALUE_ARGS}"
+        "${MULTI_VALUE_ARGS}"
         ${ARGN})
     #
     # Ensure all required arguments are provided.
@@ -838,12 +838,12 @@ function(set_json_value_by_dot_notation)
     # https://discourse.cmake.org/t/checking-for-empty-string-doesnt-work-as-expected/3639/4
     if ("${CUR_NAME}" STREQUAL "" AND "${CUR_PATH}" STREQUAL "")
         #
-        # If the dot notation is '.', 
+        # If the dot notation is '.',
         # then no post-processing is needed after the while loop is executed.
         #
     else()
         #
-        # If the dot notation is the correct syntax of '.xxx.yyy.zzz', 
+        # If the dot notation is the correct syntax of '.xxx.yyy.zzz',
         # then push the CUR_PATH at the end of the while loop into NAME_STACK as CUR_NAME.
         #
         set(CUR_NAME "${CUR_PATH}")
@@ -896,20 +896,20 @@ function(get_json_value_by_dot_notation)
     #
     set(OPTIONS)
     set(ONE_VALUE_ARGS      ERROR_VARIABLE
-                            IN_JSON_OBJECT 
-                            IN_DOT_NOTATION 
+                            IN_JSON_OBJECT
+                            IN_DOT_NOTATION
                             OUT_JSON_VALUE)
     set(MULTI_VALUE_ARGS)
-    cmake_parse_arguments(GJVBDN 
-        "${OPTIONS}" 
-        "${ONE_VALUE_ARGS}" 
-        "${MULTI_VALUE_ARGS}" 
+    cmake_parse_arguments(GJVBDN
+        "${OPTIONS}"
+        "${ONE_VALUE_ARGS}"
+        "${MULTI_VALUE_ARGS}"
         ${ARGN})
     #
     # Ensure all required arguments are provided.
     #
-    set(REQUIRED_ARGS       IN_JSON_OBJECT 
-                            IN_DOT_NOTATION 
+    set(REQUIRED_ARGS       IN_JSON_OBJECT
+                            IN_DOT_NOTATION
                             OUT_JSON_VALUE)
     foreach(_ARG ${REQUIRED_ARGS})
         if(NOT DEFINED GJVBDN_${_ARG})
@@ -965,12 +965,12 @@ function(get_json_value_by_dot_notation)
     # https://discourse.cmake.org/t/checking-for-empty-string-doesnt-work-as-expected/3639/5
     if ("${CUR_NAME}" STREQUAL "" AND "${CUR_PATH}" STREQUAL "")
         #
-        # If the dot notation is '.', 
+        # If the dot notation is '.',
         # then no post-processing is needed after the while loop is executed.
         #
     else()
         #
-        # If the dot notation is the correct syntax of '.xxx.yyy.zzz', 
+        # If the dot notation is the correct syntax of '.xxx.yyy.zzz',
         # then push the CUR_PATH at the end of the while loop into NAME_STACK as CUR_NAME.
         #
         set(CUR_NAME "${CUR_PATH}")
@@ -1002,7 +1002,7 @@ endfunction()
 #
 # Get Reference of Latest and Current from Json.
 #
-function(get_reference_of_latest_and_current_from_json)
+function(get_reference_of_latest_from_repo_and_current_from_json)
     #
     # Parse arguments.
     #
@@ -1038,7 +1038,7 @@ function(get_reference_of_latest_and_current_from_json)
     endforeach()
     unset(ARG)
     #
-    # 
+    #
     #
     get_json_value_by_dot_notation(
         IN_JSON_OBJECT                  "${GRLCJ_IN_JSON_CNT}"
@@ -1089,10 +1089,10 @@ function(get_reference_of_latest_and_current_from_json)
         message(FATAL_ERROR "Invalid IN_VERSION_TYPE value. (${GRLCJ_IN_VERSION_TYPE})")
     endif()
     #
-    # Return the content of ${CURRENT_OBJECT}     to OUT_CURRENT_OBJECT.
-    # Return the content of ${CURRENT_REFERENCE}  to OUT_CURRENT_REFERENCE.
-    # Return the content of ${LATEST_OBJECT}      to OUT_LATEST_OBJECT.
-    # Return the content of ${LATEST_REFERENCE}   to OUT_LATEST_REFERENCE.
+    # Return the content of ${CURRENT_OBJECT}     to GRLCJ_OUT_CURRENT_OBJECT.
+    # Return the content of ${CURRENT_REFERENCE}  to GRLCJ_OUT_CURRENT_REFERENCE.
+    # Return the content of ${LATEST_OBJECT}      to GRLCJ_OUT_LATEST_OBJECT.
+    # Return the content of ${LATEST_REFERENCE}   to GRLCJ_OUT_LATEST_REFERENCE.
     #
     if(GRLCJ_OUT_CURRENT_OBJECT)
         set(${GRLCJ_OUT_CURRENT_OBJECT} "${CURRENT_OBJECT}" PARENT_SCOPE)
@@ -1165,10 +1165,10 @@ function(get_reference_of_pot_and_po_from_json)
         IN_DOT_NOTATION             "${DOT_NOTATION}"
         OUT_JSON_VALUE              PO_REFERENCE)
     #
-    # Return the content of ${POT_OBJECT}     to OUT_POT_OBJECT.
-    # Return the content of ${POT_REFERENCE}  to OUT_POT_REFERENCE.
-    # Return the content of ${PO_OBJECT}      to OUT_PO_OBJECT.
-    # Return the content of ${PO_REFERENCE}   to OUT_PO_REFERENCE.
+    # Return the content of ${POT_OBJECT}     to GRPPJ_OUT_POT_OBJECT.
+    # Return the content of ${POT_REFERENCE}  to GRPPJ_OUT_POT_REFERENCE.
+    # Return the content of ${PO_OBJECT}      to GRPPJ_OUT_PO_OBJECT.
+    # Return the content of ${PO_REFERENCE}   to GRPPJ_OUT_PO_REFERENCE.
     #
     if(GRPPJ_OUT_POT_OBJECT)
         set(${GRPPJ_OUT_POT_OBJECT} "${POT_OBJECT}" PARENT_SCOPE)
