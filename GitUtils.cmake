@@ -48,6 +48,15 @@ GitUtilities
         IN_REFERENCE        "${SWITCH_REFERENCE}"
         IN_BRANCH           "current")
 
+.. command:: create_git_worktree_for_l10n_branch
+
+  .. code-block:: cmake
+
+    create_git_worktree_for_l10n_branch(
+        IN_REMOTE_URL       "${REMOTE_URL_OF_L10N}"
+        IN_REPO_PATH        "${PROJ_SOURCE_DIR}"
+        IN_WORKTREE_PATH    "${PROJ_L10N_DIR}")
+
 #]============================================================]
 
 
@@ -55,6 +64,198 @@ include_guard()
 
 
 include(JsonUtils)
+include(LogUtils)
+
+
+function(create_git_worktree_for_l10n_branch)
+    #
+    # Parse arguments.
+    #
+    set(OPTIONS)
+    set(ONE_VALUE_ARGS      IN_REMOTE_URL
+                            IN_REPO_PATH
+                            IN_WORKTREE_PATH)
+    set(MULTI_VALUE_ARGS)
+    cmake_parse_arguments(CGWLB
+        "${OPTIONS}"
+        "${ONE_VALUE_ARGS}"
+        "${MULTI_VALUE_ARGS}"
+        ${ARGN})
+    #
+    # Ensure all required arguments are provided.
+    #
+    set(REQUIRED_ARGS       IN_REMOTE_URL
+                            IN_REPO_PATH
+                            IN_WORKTREE_PATH)
+    foreach(ARG ${REQUIRED_ARGS})
+        if(NOT DEFINED CGWLB_${ARG})
+            message(FATAL_ERROR "Missing ${ARG} argument.")
+        endif()
+    endforeach()
+    #
+    # Find Git executable if not exists.
+    #
+    if(NOT EXISTS "${Git_EXECUTABLE}")
+        find_package(Git QUIET MODULE REQUIRED)
+    endif()
+    #
+    #
+    #
+    message(STATUS "Checking if the remote '${CGWLB_IN_REMOTE_URL}' exists...")
+    execute_process(
+        COMMAND ${Git_EXECUTABLE} ls-remote --heads --exit-code ${CGWLB_IN_REMOTE_URL}
+        RESULT_VARIABLE RES_VAR
+        OUTPUT_VARIABLE OUT_VAR OUTPUT_STRIP_TRAILING_WHITESPACE
+        ERROR_VARIABLE  ERR_VAR ERROR_STRIP_TRAILING_WHITESPACE)
+    if(NOT RES_VAR EQUAL 0)
+        remove_cmake_message_indent()
+        message("")
+        message("The remote '${CGWLB_IN_REMOTE_URL}' doesn't exist.")
+        message("")
+        restore_cmake_message_indent()
+    else()
+        remove_cmake_message_indent()
+        message("")
+        message("The remote '${CGWLB_IN_REMOTE_URL}' exists.")
+        message("")
+        restore_cmake_message_indent()
+        message(STATUS "Checking if the branch 'l10n' exists in the remote...")
+        execute_process(
+            COMMAND ${Git_EXECUTABLE} ls-remote --heads --exit-code ${CGWLB_IN_REMOTE_URL} l10n
+            RESULT_VARIABLE RES_VAR
+            OUTPUT_VARIABLE OUT_VAR OUTPUT_STRIP_TRAILING_WHITESPACE
+            ERROR_VARIABLE  ERR_VAR ERROR_STRIP_TRAILING_WHITESPACE)
+        if(NOT RES_VAR EQUAL 0)
+            remove_cmake_message_indent()
+            message("")
+            message("The branch 'l10n' doesn't exist in the remote.")
+            message("")
+            restore_cmake_message_indent()
+        else()
+            remove_cmake_message_indent()
+            message("")
+            message("The branch 'l10n' exist in the remote.")
+            message("")
+            restore_cmake_message_indent()
+            message(STATUS "Checking if the git worktree exists in '${CGWLB_IN_WORKTREE_PATH}'...")
+            if(EXISTS "${CGWLB_IN_WORKTREE_PATH}/.git")
+                remove_cmake_message_indent()
+                message("")
+                message("The git worktree exists in '${CGWLB_IN_WORKTREE_PATH}'.")
+                message("")
+                execute_process(
+                    COMMAND ${Git_EXECUTABLE} status
+                    WORKING_DIRECTORY ${CGWLB_IN_WORKTREE_PATH}
+                    ECHO_OUTPUT_VARIABLE
+                    ECHO_ERROR_VARIABLE
+                    COMMAND_ERROR_IS_FATAL ANY)
+                message("")
+                execute_process(
+                    COMMAND ${Git_EXECUTABLE} show --no-patch --format=full
+                    WORKING_DIRECTORY ${CGWLB_IN_WORKTREE_PATH}
+                    ECHO_OUTPUT_VARIABLE
+                    ECHO_ERROR_VARIABLE
+                    COMMAND_ERROR_IS_FATAL ANY)
+                message("")
+                restore_cmake_message_indent()
+            else()
+                remove_cmake_message_indent()
+                message("")
+                message("The git worktree doesn't exist in '${CGWLB_IN_WORKTREE_PATH}'.")
+                message("")
+                restore_cmake_message_indent()
+                message(STATUS "Prepare to create a git worktree.")
+                execute_process(
+                    COMMAND ${Git_EXECUTABLE} remote
+                    WORKING_DIRECTORY ${CGWLB_IN_REPO_PATH}
+                    RESULT_VARIABLE RES_VAR
+                    OUTPUT_VARIABLE OUT_VAR OUTPUT_STRIP_TRAILING_WHITESPACE
+                    ERROR_VARIABLE  ERR_VAR ERROR_STRIP_TRAILING_WHITESPACE)
+                if(RES_VAR EQUAL 0)
+                    set(REMOTE_NAME "${OUT_VAR}")
+                else()
+                    message(FATAL_ERROR "${ERR_VAR}")
+                endif()
+                message(STATUS "Adding fetch refspec 'refs/heads/l10n:refs/remotes/${REMOTE_NAME}/l10n'...")
+                remove_cmake_message_indent()
+                message("")
+                execute_process(
+                    COMMAND ${Git_EXECUTABLE} config --get-all
+                            remote.${REMOTE_NAME}.fetch
+                            refs/heads/l10n:refs/remotes/${REMOTE_NAME}/l10n
+                    WORKING_DIRECTORY ${CGWLB_IN_REPO_PATH}
+                    RESULT_VARIABLE RES_VAR
+                    OUTPUT_VARIABLE OUT_VAR OUTPUT_STRIP_TRAILING_WHITESPACE
+                    ERROR_VARIABLE  ERR_VAR ERROR_STRIP_TRAILING_WHITESPACE)
+                if(RES_VAR EQUAL 0)
+                    # Fetch refspec 'refs/heads/l10n:refs/remotes/${REMOTE_NAME}/l10n' already exists.
+                elseif(RES_VAR EQUAL 1)
+                    # Fetch refspec 'refs/heads/l10n:refs/remotes/${REMOTE_NAME}/l10n' doesn't exist.
+                    execute_process(
+                        COMMAND ${Git_EXECUTABLE} config --add
+                                remote.${REMOTE_NAME}.fetch 
+                                +refs/heads/l10n:refs/remotes/${REMOTE_NAME}/l10n
+                        WORKING_DIRECTORY ${CGWLB_IN_REPO_PATH}
+                        ECHO_OUTPUT_VARIABLE
+                        ECHO_ERROR_VARIABLE
+                        COMMAND_ERROR_IS_FATAL ANY)
+                else()
+                    message(FATAL_ERROR "${ERR_VAR}")
+                endif()
+                execute_process(
+                    COMMAND ${Git_EXECUTABLE} config --get-all
+                            remote.${REMOTE_NAME}.fetch
+                    WORKING_DIRECTORY ${CGWLB_IN_REPO_PATH}
+                    ECHO_OUTPUT_VARIABLE
+                    ECHO_ERROR_VARIABLE
+                    COMMAND_ERROR_IS_FATAL ANY)
+                message("")
+                restore_cmake_message_indent()
+                message(STATUS "Fetching/Tracking the remote branch 'l10n' to the local branch 'l10n'...")
+                remove_cmake_message_indent()
+                message("")
+                execute_process(
+                    COMMAND ${Git_EXECUTABLE} fetch ${REMOTE_NAME} l10n:l10n --verbose --update-head-ok
+                    WORKING_DIRECTORY ${CGWLB_IN_REPO_PATH}
+                    ECHO_OUTPUT_VARIABLE
+                    ECHO_ERROR_VARIABLE
+                    COMMAND_ERROR_IS_FATAL ANY)
+                execute_process(
+                    COMMAND ${Git_EXECUTABLE} branch --set-upstream-to=${REMOTE_NAME}/l10n l10n
+                    WORKING_DIRECTORY ${CGWLB_IN_REPO_PATH}
+                    ECHO_OUTPUT_VARIABLE
+                    ECHO_ERROR_VARIABLE
+                    COMMAND_ERROR_IS_FATAL ANY)
+                message("")
+                restore_cmake_message_indent()
+                message(STATUS "Creating a git worktree for 'l10n' branch in ${CGWLB_IN_WORKTREE_PATH}...")
+                remove_cmake_message_indent()
+                message("")
+                execute_process(
+                    COMMAND ${CMAKE_COMMAND} -E rm -rf ${CGWLB_IN_WORKTREE_PATH}
+                    WORKING_DIRECTORY ${CGWLB_IN_REPO_PATH}
+                    ECHO_OUTPUT_VARIABLE
+                    ECHO_ERROR_VARIABLE
+                    COMMAND_ERROR_IS_FATAL ANY)
+                execute_process(
+                    COMMAND ${Git_EXECUTABLE} worktree prune
+                    WORKING_DIRECTORY ${CGWLB_IN_REPO_PATH}
+                    ECHO_OUTPUT_VARIABLE
+                    ECHO_ERROR_VARIABLE
+                    COMMAND_ERROR_IS_FATAL ANY)
+                execute_process(
+                    COMMAND ${Git_EXECUTABLE} worktree add ${CGWLB_IN_WORKTREE_PATH} l10n
+                    WORKING_DIRECTORY ${CGWLB_IN_REPO_PATH}
+                    ECHO_OUTPUT_VARIABLE
+                    ECHO_ERROR_VARIABLE
+                    COMMAND_ERROR_IS_FATAL ANY)
+                message("")
+                restore_cmake_message_indent()
+                unset(REMOTE_NAME)
+            endif()
+        endif()
+    endif()
+endfunction()
 
 
 function(get_git_latest_branch_on_branch_pattern)
