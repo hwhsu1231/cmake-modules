@@ -1068,7 +1068,7 @@ function(get_reference_of_latest_from_repo_and_current_from_json)
             OUT_JSON_OBJECT             LATEST_OBJECT)
         set(LATEST_REFERENCE            "${LATEST_COMMIT_HASH}")
         set(CURRENT_REFERENCE           "${CURRENT_COMMIT_HASH}")
-    elseif(GRLCJ_IN_VERSION_TYPE STREQUAL "type")
+    elseif(GRLCJ_IN_VERSION_TYPE STREQUAL "tag")
         get_json_value_by_dot_notation(
             IN_JSON_OBJECT              "${CURRENT_OBJECT}"
             IN_DOT_NOTATION             ".tag"
