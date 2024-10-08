@@ -44,18 +44,20 @@ Hints
 
 #]=================================================================================]
 
-if(WIN32)
-    set(_CROWDIN_NAME "crowdin.bat;crowdin.cmd")
+if(CMAKE_HOST_WIN32)
+    set(_CROWDIN_NAME "crowdin.exe;crowdin.bat;crowdin.cmd")
 else()
     set(_CROWDIN_NAME "crowdin")
 endif()
 
-set(_Crowdin_SEARCH_HINTS 
-    ${Crowdin_ROOT_DIR} 
+set(_Crowdin_SEARCH_HINTS
+    ${Crowdin_ROOT_DIR}
     ENV Crowdin_ROOT_DIR
     ENV CROWDIN_HOME)
 
 set(_Crowdin_SEARCH_PATHS)
+
+set(_Crowdin_FAILURE_REASON)
 
 find_program(Crowdin_EXECUTABLE
     NAMES ${_CROWDIN_NAME}
@@ -81,14 +83,28 @@ endif()
 
 if(Crowdin_EXECUTABLE)
     execute_process(
-        COMMAND "${Crowdin_EXECUTABLE}" --version
-        OUTPUT_VARIABLE Crowdin_VERSION
-        OUTPUT_STRIP_TRAILING_WHITESPACE)
+        COMMAND ${Crowdin_EXECUTABLE} --version
+        RESULT_VARIABLE _Crowdin_VERSION_RESULT
+        OUTPUT_VARIABLE _Crowdin_VERSION_OUTPUT OUTPUT_STRIP_TRAILING_WHITESPACE
+        ERROR_VARIABLE  _Crowdin_VERSION_ERROR  ERROR_STRIP_TRAILING_WHITESPACE)
 
-    string(REGEX MATCH "([0-9]+)\\.([0-9]+)\\.([0-9]+)" _ ${Crowdin_VERSION})
-    set(Crowdin_VERSION_MAJOR "${CMAKE_MATCH_1}")
-    set(Crowdin_VERSION_MINOR "${CMAKE_MATCH_2}")
-    set(Crowdin_VERSION_PATCH "${CMAKE_MATCH_3}")
+    if (_Crowdin_VERSION_RESULT EQUAL 0)
+        string(REGEX MATCH "([0-9]+\\.[0-9]+\\.[0-9]+)" Crowdin_VERSION ${_Crowdin_VERSION_OUTPUT})
+        string(REGEX MATCH "([0-9]+)\\.([0-9]+)\\.([0-9]+)" _ ${Crowdin_VERSION})
+        set(Crowdin_VERSION_MAJOR "${CMAKE_MATCH_1}")
+        set(Crowdin_VERSION_MINOR "${CMAKE_MATCH_2}")
+        set(Crowdin_VERSION_PATCH "${CMAKE_MATCH_3}")
+    else()
+        # Set Crowdin_FOUND to FALSE when 'crowdin --version' is broken.
+        set(Crowdin_FOUND FALSE)
+        string(APPEND _Crowdin_FAILURE_REASON
+        "The command\n\n"
+        "      \"${Crowdin_EXECUTABLE}\" --version\n\n"
+        "    failed with fatal errors.\n\n"
+        "    result:\n\n${_Crowdin_VERSION_RESULT}\n\n"
+        "    stdout:\n\n${_Crowdin_VERSION_OUTPUT}\n\n"
+        "    stderr:\n\n${_Crowdin_VERSION_ERROR}")
+    endif()
 endif()
 
 # Handle REQUIRED and QUIET arguments
@@ -102,7 +118,7 @@ find_package_handle_standard_args(Crowdin
     FOUND_VAR
         Crowdin_FOUND
     FAIL_MESSAGE
-        "Failed to locate crowdin executable"
+        "${_Crowdin_FAILURE_REASON}"
     HANDLE_VERSION_RANGE)
 
 if(Crowdin_FOUND)
@@ -111,7 +127,8 @@ if(Crowdin_FOUND)
         if(NOT TARGET Crowdin::Crowdin)
             add_executable(Crowdin::Crowdin IMPORTED)
             set_target_properties(Crowdin::Crowdin PROPERTIES
-                IMPORTED_LOCATION "${Crowdin_EXECUTABLE}")
+                IMPORTED_LOCATION
+                    "${Crowdin_EXECUTABLE}")
         endif()
     endif()
     unset(_Crowdin_CMAKE_ROLE)

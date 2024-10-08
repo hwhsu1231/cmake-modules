@@ -152,11 +152,11 @@ if(NOT Gettext_FIND_COMPONENTS)
     unset(_COMP)
 endif()
 
-set(_Gettext_SEARCH_HINTS 
-    ${Gettext_ROOT_DIR} 
+set(_Gettext_SEARCH_HINTS
+    ${Gettext_ROOT_DIR}
     ENV Gettext_ROOT_DIR)
 
-set(_Gettext_SEARCH_PATHS 
+set(_Gettext_SEARCH_PATHS
     "$ENV{ProgramFiles}\\gettext-iconv\\bin"
     "$ENV{ProgramFiles}\\Git\\usr\\bin")
 
@@ -230,7 +230,7 @@ if(Gettext_FOUND)
                 AND Gettext_${_COMP}_FOUND)
                 add_executable(Gettext::${_COMP} IMPORTED)
                 set_target_properties(Gettext::${_COMP} PROPERTIES
-                    IMPORTED_LOCATION 
+                    IMPORTED_LOCATION
                         "${Gettext_${_COMP_UPPER}_EXECUTABLE}")
             endif()
         endforeach()

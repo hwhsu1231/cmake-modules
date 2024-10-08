@@ -46,22 +46,21 @@ Hints
 
 if(CMAKE_HOST_WIN32)
     set(_CONDA_NAME "conda.bat;conda.exe")
-    set(_Conda_PATH_SUFFIXES Scripts)
 else()
     set(_CONDA_NAME "conda")
-    set(_Conda_PATH_SUFFIXES bin)
 endif()
 
-set(_Conda_SEARCH_HINTS 
-    ${Conda_ROOT_DIR} 
+set(_Conda_SEARCH_HINTS
+    ${Conda_ROOT_DIR}
     ENV Conda_ROOT_DIR
     ENV CONDA_PREFIX)
 
-set(_Conda_SEARCH_PATHS)
+set(_Conda_SEARCH_PATHS "")
+
+set(_Conda_FAILURE_REASON "")
 
 find_program(Conda_EXECUTABLE
     NAMES ${_CONDA_NAME}
-    PATH_SUFFIXES ${_Conda_PATH_SUFFIXES}
     HINTS ${_Conda_SEARCH_HINTS}
     PATHS ${_Conda_SEARCH_PATHS}
     DOC "The full path to the conda executable.")
@@ -69,17 +68,27 @@ find_program(Conda_EXECUTABLE
 if(Conda_EXECUTABLE)
     execute_process(
         COMMAND ${Conda_EXECUTABLE} --version
-        OUTPUT_VARIABLE _Conda_VERSION_OUTPUT
-        OUTPUT_STRIP_TRAILING_WHITESPACE)
+        RESULT_VARIABLE _Conda_VERSION_RESULT
+        OUTPUT_VARIABLE _Conda_VERSION_OUTPUT OUTPUT_STRIP_TRAILING_WHITESPACE
+        ERROR_VARIABLE  _Conda_VERSION_ERROR  ERROR_STRIP_TRAILING_WHITESPACE)
 
-    string(REGEX MATCH "([0-9]+\\.[0-9]+\\.[0-9]+)" 
-        Conda_VERSION ${_Conda_VERSION_OUTPUT})
-    unset(_Conda_VERSION_OUTPUT)
-
-    string(REGEX MATCH "([0-9]+)\\.([0-9]+)\\.([0-9]+)" _ ${Conda_VERSION})
-    set(Conda_VERSION_MAJOR "${CMAKE_MATCH_1}")
-    set(Conda_VERSION_MINOR "${CMAKE_MATCH_2}")
-    set(Conda_VERSION_PATCH "${CMAKE_MATCH_3}")
+    if (_Conda_VERSION_RESULT EQUAL 0)
+        string(REGEX MATCH "([0-9]+\\.[0-9]+\\.[0-9]+)" Conda_VERSION ${_Conda_VERSION_OUTPUT})
+        string(REGEX MATCH "([0-9]+)\\.([0-9]+)\\.([0-9]+)" _ ${Conda_VERSION})
+        set(Conda_VERSION_MAJOR "${CMAKE_MATCH_1}")
+        set(Conda_VERSION_MINOR "${CMAKE_MATCH_2}")
+        set(Conda_VERSION_PATCH "${CMAKE_MATCH_3}")
+    else()
+        # Set Conda_FOUND to FALSE when 'conda --version' is broken.
+        set(Conda_FOUND FALSE)
+        string(APPEND _Conda_FAILURE_REASON
+        "The command\n\n"
+        "      \"${Conda_EXECUTABLE}\" --version\n\n"
+        "    failed with fatal errors.\n\n"
+        "    result:\n\n${_Conda_VERSION_RESULT}\n\n"
+        "    stdout:\n\n${_Conda_VERSION_OUTPUT}\n\n"
+        "    stderr:\n\n${_Conda_VERSION_ERROR}")
+    endif()
 endif()
 
 # Handle REQUIRED and QUIET arguments
@@ -93,7 +102,7 @@ find_package_handle_standard_args(Conda
     FOUND_VAR
         Conda_FOUND
     FAIL_MESSAGE
-        "Failed to locate conda executable"
+        "${_Conda_FAILURE_REASON}"
     HANDLE_VERSION_RANGE)
 
 if(Conda_FOUND)
@@ -102,7 +111,8 @@ if(Conda_FOUND)
         if(NOT TARGET Conda::Conda)
             add_executable(Conda::Conda IMPORTED)
             set_target_properties(Conda::Conda PROPERTIES
-                IMPORTED_LOCATION "${Conda_EXECUTABLE}")
+                IMPORTED_LOCATION
+                    "${Conda_EXECUTABLE}")
         endif()
     endif()
     unset(_Conda_CMAKE_ROLE)

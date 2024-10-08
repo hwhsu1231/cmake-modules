@@ -9,7 +9,7 @@ Try to find Sphinx documentation generator's command-line tools.
 
 This is a component-based find module, which makes use of the COMPONENTS and OPTIONAL_COMPONENTS arguments to find_module. The following components are available::
 
-  Build Quickstart Apidoc Autogen 
+  Build Quickstart Apidoc Autogen
 
 If no components are specified, this module will act as though all components were passed to ``OPTIONAL_COMPONENTS``.
 
@@ -92,8 +92,8 @@ if(NOT Sphinx_FIND_COMPONENTS)
     unset(_COMP)
 endif()
 
-set(_Sphinx_SEARCH_HINTS 
-    ${Sphinx_ROOT_DIR} 
+set(_Sphinx_SEARCH_HINTS
+    ${Sphinx_ROOT_DIR}
     ENV Sphinx_ROOT_DIR
     ENV VIRTUAL_ENV)
 
@@ -149,7 +149,8 @@ if(Sphinx_BUILD_EXECUTABLE)
         string(APPEND _Sphinx_FAILURE_REASON
         "The command\n\n"
         "      \"${Sphinx_BUILD_EXECUTABLE}\" --version\n\n"
-        "    failed with result: \n\n${_Sphinx_VERSION_RESULT}\n\n"
+        "    failed with fatal errors.\n\n"
+        "    result:\n\n${_Sphinx_VERSION_RESULT}\n\n"
         "    stdout:\n\n${_Sphinx_VERSION_OUTPUT}\n\n"
         "    stderr:\n\n${_Sphinx_VERSION_ERROR}")
     endif()
@@ -182,7 +183,7 @@ if(Sphinx_FOUND)
                 AND Sphinx_${_COMP}_FOUND)
                 add_executable(Sphinx::${_COMP} IMPORTED)
                 set_target_properties(Sphinx::${_COMP} PROPERTIES
-                    IMPORTED_LOCATION 
+                    IMPORTED_LOCATION
                         "${Sphinx_${_COMP_UPPER}_EXECUTABLE}")
             endif()
         endforeach()

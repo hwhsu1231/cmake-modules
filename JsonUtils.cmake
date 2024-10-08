@@ -75,27 +75,27 @@ Set Members of Json Object for language and commit
   .. code-block:: cmake
 
     set_members_of_reference_json_object(
-        IN_TYPE           "tag"
-        IN_MEMBER_TAG     "\"${repo_latest_tag}\""
-        OUT_JSON_OBJECT   LANGUAGE_CNT)
+        IN_TYPE             "tag"
+        IN_MEMBER_TAG       "\"${repo_latest_tag}\""
+        OUT_JSON_OBJECT     LANGUAGE_CNT)
 
   .. code-block:: cmake
 
     set_members_of_reference_json_object(
-        IN_TYPE           "branch"
-        IN_MEMBER_BRANCH  "\"${IN_VERSION}\""
-        IN_MEMBER_COMMIT  "${COMMIT_CNT}"
-        OUT_JSON_OBJECT   LANGUAGE_CNT)
+        IN_TYPE             "branch"
+        IN_MEMBER_BRANCH    "\"${IN_VERSION}\""
+        IN_MEMBER_COMMIT    "${COMMIT_CNT}"
+        OUT_JSON_OBJECT     LANGUAGE_CNT)
 
 .. command:: set_members_of_commit_json_object
 
   .. code-block:: cmake
 
     set_members_of_commit_json_object(
-        IN_MEMBER_DATE    "\"2023-07-19 14:40:53 -0400\""
-        IN_MEMBER_HASH    "\"0baa8af568bcb0b0caadb7cedcb21353396cae7b\""
-        IN_MEMBER_TITLE   "\"Merge branch 'release-3.27'\""
-        OUT_JSON_OBJECT   COMMIT_CNT)
+        IN_MEMBER_DATE      "\"2023-07-19 14:40:53 -0400\""
+        IN_MEMBER_HASH      "\"0baa8af568bcb0b0caadb7cedcb21353396cae7b\""
+        IN_MEMBER_TITLE     "\"Merge branch 'release-3.27'\""
+        OUT_JSON_OBJECT     COMMIT_CNT)
 
 Dot Notation Setter/Getter
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -119,8 +119,8 @@ Dot Notation Setter/Getter
         IN_DOT_NOTATION   "pot"
         OUT_VALUE         potValue)
 
-Get Reference of Latest and Current from Json
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Get Reference of Latest from Repository and Current from Json
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
   .. code-block:: cmake
 
@@ -1000,7 +1000,7 @@ endfunction()
 
 
 #
-# Get Reference of Latest and Current from Json.
+# Get Reference of Latest from Repository and Current from Json.
 #
 function(get_reference_of_latest_from_repo_and_current_from_json)
     #

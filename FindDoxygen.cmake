@@ -46,8 +46,10 @@ Hints
 
 #]=================================================================================]
 
-set(_Doxygen_SEARCH_HINTS 
-    ${Doxygen_ROOT_DIR} 
+set(_Doxygen_PATH_SUFFIXES bin)
+
+set(_Doxygen_SEARCH_HINTS
+    ${Doxygen_ROOT_DIR}
     ENV Doxygen_ROOT_DIR)
 
 set(_Doxygen_SEARCH_PATHS "")
@@ -56,7 +58,7 @@ set(_Doxygen_FAILURE_REASON "")
 
 find_program(Doxygen_EXECUTABLE
     NAMES doxygen
-    PATH_SUFFIXES bin
+    PATH_SUFFIXES ${_Doxygen_PATH_SUFFIXES}
     HINTS ${_Doxygen_SEARCH_HINTS}
     PATHS ${_Doxygen_SEARCH_PATHS}
     DOC "The full path to the doxygen executable.")
@@ -66,7 +68,7 @@ endif()
 
 if(Doxygen_EXECUTABLE)
     execute_process(
-        COMMAND "${Doxygen_EXECUTABLE}" --version
+        COMMAND ${Doxygen_EXECUTABLE} --version
         RESULT_VARIABLE _Doxygen_VERSION_RESULT
         OUTPUT_VARIABLE _Doxygen_VERSION_OUTPUT OUTPUT_STRIP_TRAILING_WHITESPACE
         ERROR_VARIABLE  _Doxygen_VERSION_ERROR  ERROR_STRIP_TRAILING_WHITESPACE)
@@ -83,7 +85,8 @@ if(Doxygen_EXECUTABLE)
         string(APPEND _Doxygen_FAILURE_REASON
         "The command\n\n"
         "      \"${Doxygen_EXECUTABLE}\" --version\n\n"
-        "    failed with result: \n\n${_Doxygen_VERSION_RESULT}\n\n"
+        "    failed with fatal errors.\n\n"
+        "    result:\n\n${_Doxygen_VERSION_RESULT}\n\n"
         "    stdout:\n\n${_Doxygen_VERSION_OUTPUT}\n\n"
         "    stderr:\n\n${_Doxygen_VERSION_ERROR}")
     endif()
@@ -109,7 +112,8 @@ if(Doxygen_FOUND)
         if(NOT TARGET Doxygen::Doxygen)
             add_executable(Doxygen::Doxygen IMPORTED)
             set_target_properties(Doxygen::Doxygen PROPERTIES
-                IMPORTED_LOCATION "${Doxygen_EXECUTABLE}")
+                IMPORTED_LOCATION
+                    "${Doxygen_EXECUTABLE}")
         endif()
     endif()
     unset(_Doxygen_CMAKE_ROLE)

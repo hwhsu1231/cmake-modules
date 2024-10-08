@@ -193,7 +193,7 @@ function(create_git_worktree_for_l10n_branch)
                     # Fetch refspec 'refs/heads/l10n:refs/remotes/${REMOTE_NAME}/l10n' doesn't exist.
                     execute_process(
                         COMMAND ${Git_EXECUTABLE} config --add
-                                remote.${REMOTE_NAME}.fetch 
+                                remote.${REMOTE_NAME}.fetch
                                 +refs/heads/l10n:refs/remotes/${REMOTE_NAME}/l10n
                         WORKING_DIRECTORY ${CGWLB_IN_REPO_PATH}
                         ECHO_OUTPUT_VARIABLE
@@ -263,13 +263,13 @@ function(get_git_latest_branch_on_branch_pattern)
     # Parse arguments.
     #
     set(OPTIONS)
-    set(ONE_VALUE_ARGS      IN_REPO_PATH 
+    set(ONE_VALUE_ARGS      IN_REPO_PATH
                             IN_SOURCE_TYPE
-                            IN_BRANCH_PATTERN 
+                            IN_BRANCH_PATTERN
                             IN_BRANCH_SUFFIX
                             OUT_BRANCH)
     set(MULTI_VALUE_ARGS)
-    cmake_parse_arguments(GGLBBP 
+    cmake_parse_arguments(GGLBBP
         "${OPTIONS}"
         "${ONE_VALUE_ARGS}"
         "${MULTI_VALUE_ARGS}"
@@ -277,9 +277,9 @@ function(get_git_latest_branch_on_branch_pattern)
     #
     # Ensure all required arguments are provided.
     #
-    set(REQUIRED_ARGS       IN_REPO_PATH 
+    set(REQUIRED_ARGS       IN_REPO_PATH
                             IN_BRANCH_PATTERN
-                            IN_SOURCE_TYPE 
+                            IN_SOURCE_TYPE
                             OUT_BRANCH)
     foreach(ARG ${REQUIRED_ARGS})
         if(NOT DEFINED GGLBBP_${ARG})
@@ -581,13 +581,13 @@ function(get_git_latest_tag_on_tag_pattern)
     # Parse arguments.
     #
     set(OPTIONS)
-    set(ONE_VALUE_ARGS      IN_REPO_PATH 
+    set(ONE_VALUE_ARGS      IN_REPO_PATH
                             IN_SOURCE_TYPE
-                            IN_TAG_PATTERN 
+                            IN_TAG_PATTERN
                             IN_TAG_SUFFIX
                             OUT_TAG)
     set(MULTI_VALUE_ARGS)
-    cmake_parse_arguments(GGLTTP 
+    cmake_parse_arguments(GGLTTP
         "${OPTIONS}"
         "${ONE_VALUE_ARGS}"
         "${MULTI_VALUE_ARGS}"
@@ -595,9 +595,9 @@ function(get_git_latest_tag_on_tag_pattern)
     #
     # Ensure all required arguments are provided.
     #
-    set(REQUIRED_ARGS       IN_REPO_PATH 
+    set(REQUIRED_ARGS       IN_REPO_PATH
                             IN_TAG_PATTERN
-                            IN_SOURCE_TYPE 
+                            IN_SOURCE_TYPE
                             OUT_TAG)
     foreach(ARG ${REQUIRED_ARGS})
         if(NOT DEFINED GGLTTP_${ARG})
@@ -676,9 +676,9 @@ function(get_git_latest_tag_on_tag_pattern)
     # Get the list of tags matching the tag pattern.
     #
     execute_process(
-        COMMAND ${Git_EXECUTABLE} ls-remote 
-                --refs 
-                --tags 
+        COMMAND ${Git_EXECUTABLE} ls-remote
+                --refs
+                --tags
                 --sort=-v:refname
                 ${GGLTTP_REPO_SOURCE}
         WORKING_DIRECTORY ${GGLTTP_IN_REPO_PATH}
@@ -771,7 +771,7 @@ function(switch_to_git_reference_on_branch)
                             IN_REFERENCE
                             IN_BRANCH)
     set(MULTI_VALUE_ARGS)
-    cmake_parse_arguments(SGRB 
+    cmake_parse_arguments(SGRB
         "${OPTIONS}"
         "${ONE_VALUE_ARGS}"
         "${MULTI_VALUE_ARGS}"

@@ -44,11 +44,13 @@ Hints
 
 #]=================================================================================]
 
-set(_Git_SEARCH_HINTS 
-    ${Git_ROOT_DIR} 
+set(_Git_SEARCH_HINTS
+    ${Git_ROOT_DIR}
     ENV Git_ROOT_DIR)
 
 set(_Git_SEARCH_PATHS)
+
+set(_Git_FAILURE_REASON "")
 
 find_program(Git_EXECUTABLE
     NAMES git
@@ -58,19 +60,28 @@ find_program(Git_EXECUTABLE
 
 if(Git_EXECUTABLE)
     execute_process(
-        COMMAND "${Git_EXECUTABLE}" --version
-        OUTPUT_VARIABLE _Git_VERSION_OUTPUT
-        OUTPUT_STRIP_TRAILING_WHITESPACE)
+        COMMAND ${Git_EXECUTABLE} --version
+        RESULT_VARIABLE _Git_VERSION_RESULT
+        OUTPUT_VARIABLE _Git_VERSION_OUTPUT OUTPUT_STRIP_TRAILING_WHITESPACE
+        ERROR_VARIABLE  _Git_VERSION_ERROR  ERROR_STRIP_TRAILING_WHITESPACE)
 
-    string(REGEX MATCH "[0-9]+\\.[0-9]+\\.[0-9]+([-\\.][a-zA-Z0-9]+)*" 
-        Git_VERSION ${_Git_VERSION_OUTPUT})
-
-    string(REGEX MATCH "([0-9]+)\\.([0-9]+)\\.([0-9]+)" _ ${Git_VERSION})
-    set(Git_VERSION_MAJOR "${CMAKE_MATCH_1}")
-    set(Git_VERSION_MINOR "${CMAKE_MATCH_2}")
-    set(Git_VERSION_PATCH "${CMAKE_MATCH_3}")
-
-    unset(_Git_VERSION_OUTPUT)
+    if (_Git_VERSION_RESULT EQUAL 0)
+        string(REGEX MATCH "[0-9]+\\.[0-9]+\\.[0-9]+([-\\.][a-zA-Z0-9]+)*" Git_VERSION ${_Git_VERSION_OUTPUT})
+        string(REGEX MATCH "([0-9]+)\\.([0-9]+)\\.([0-9]+)" _ ${Git_VERSION})
+        set(Git_VERSION_MAJOR "${CMAKE_MATCH_1}")
+        set(Git_VERSION_MINOR "${CMAKE_MATCH_2}")
+        set(Git_VERSION_PATCH "${CMAKE_MATCH_3}")
+    else()
+        # Set Git_FOUND to FALSE when 'crowdin --version' is broken.
+        set(Git_FOUND FALSE)
+        string(APPEND _Git_FAILURE_REASON
+        "The command\n\n"
+        "      \"${Git_EXECUTABLE}\" --version\n\n"
+        "    failed with fatal errors.\n\n"
+        "    result:\n\n${_Git_VERSION_RESULT}\n\n"
+        "    stdout:\n\n${_Git_VERSION_OUTPUT}\n\n"
+        "    stderr:\n\n${_Git_VERSION_ERROR}")
+    endif()
 endif()
 
 # Handle REQUIRED and QUIET arguments
@@ -83,6 +94,8 @@ find_package_handle_standard_args(Git
         Git_VERSION
     FOUND_VAR
         Git_FOUND
+    FAIL_MESSAGE
+        "${_Git_FAILURE_REASON}"
     HANDLE_VERSION_RANGE)
 
 if(Git_FOUND)
@@ -91,7 +104,8 @@ if(Git_FOUND)
         if(NOT TARGET Git::Git)
             add_executable(Git::Git IMPORTED)
             set_target_properties(Git::Git PROPERTIES
-                IMPORTED_LOCATION "${Git_EXECUTABLE}")
+                IMPORTED_LOCATION
+                    "${Git_EXECUTABLE}")
         endif()
     endif()
     unset(_Git_CMAKE_ROLE)
