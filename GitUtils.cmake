@@ -766,7 +766,7 @@ function(switch_to_git_reference_on_branch)
     #
     # Parse arguments.
     #
-    set(OPTIONS)
+    set(OPTIONS             NO_SUBMODULE)
     set(ONE_VALUE_ARGS      IN_REPO_PATH
                             IN_REFERENCE
                             IN_BRANCH)
@@ -776,6 +776,7 @@ function(switch_to_git_reference_on_branch)
         "${ONE_VALUE_ARGS}"
         "${MULTI_VALUE_ARGS}"
         ${ARGN})
+    message(STATUS "SGRB_NO_SUBMODULE = ${SGRB_NO_SUBMODULE}")
     #
     # Ensure all required arguments are provided.
     #
@@ -797,7 +798,7 @@ function(switch_to_git_reference_on_branch)
     #
     # Switch to ${SGRB_IN_REFERENCE} on branch ${SGRB_IN_BRANCH}.
     #
-    if(EXISTS "${SGRB_IN_REPO_PATH}/.gitmodules")
+    if(EXISTS "${SGRB_IN_REPO_PATH}/.gitmodules" AND NOT SGRB_NO_SUBMODULE)
         execute_process(
             COMMAND ${Git_EXECUTABLE} submodule deinit --all --force
             WORKING_DIRECTORY ${SGRB_IN_REPO_PATH}
@@ -837,7 +838,7 @@ function(switch_to_git_reference_on_branch)
         ECHO_OUTPUT_VARIABLE
         ECHO_ERROR_VARIABLE
         COMMAND_ERROR_IS_FATAL ANY)
-    if(EXISTS "${SGRB_IN_REPO_PATH}/.gitmodules")
+    if(EXISTS "${SGRB_IN_REPO_PATH}/.gitmodules" AND NOT SGRB_NO_SUBMODULE)
         message("")
         execute_process(
             COMMAND ${Git_EXECUTABLE} submodule sync
