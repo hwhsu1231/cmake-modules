@@ -999,9 +999,55 @@ function(get_json_value_by_dot_notation)
 endfunction()
 
 
-#
+#[[[
 # Get Reference of Latest from Repository and Current from Json.
 #
+# **Keyword Arguments**
+#
+# :keyword  IN_JSON_CNT: (Required)
+#           Input JSON content as a string containing the current reference information.
+# :type     IN_JSON_CNT: string
+#
+# :keyword  IN_REPO_PATH: (Required)
+#           Path to the local repository to retrieve the latest reference.
+# :type     IN_REPO_PATH: string
+#
+# :keyword  IN_DOT_NOTATION: (Required)
+#           Dot notation path used to extract the current reference from the input JSON content.
+# :type     IN_DOT_NOTATION: string
+#
+# :keyword  IN_VERSION_TYPE: (Required)
+# :type     IN_VERSION_TYPE: string
+#
+# :keyword  IN_BRANCH_NAME: (Optional)
+#           Name of the branch to retrieve the latest commit.
+# :type     IN_BRANCH_NAME: string
+#
+# :keyword  IN_TAG_PATTERN: (Optional)
+#           Pattern to match tags for the latest tag retrieval.
+# :type     IN_TAG_PATTERN: string
+#
+# :keyword  IN_TAG_SUFFIX: (Optional)
+#           Suffix to append to the tag name during tag matching.
+# :type     IN_TAG_SUFFIX: string
+#
+# :keyword  OUT_LATEST_OBJECT: (Optional)
+#           Variable to store the latest reference JSON object.
+# :type     OUT_LATEST_OBJECT: string
+#
+# :keyword  OUT_LATEST_REFERENCE: (Optional)
+#           Variable to store the latest reference (branch or tag).
+# :type     OUT_LATEST_REFERENCE: string
+#
+# :keyword  OUT_CURRENT_OBJECT: (Optional)
+#           Variable to store the current reference JSON object.
+# :type     OUT_CURRENT_OBJECT: string
+#
+# :keyword  OUT_CURRENT_REFERENCE: (Optional)
+#           Variable to store the current reference (branch or tag).
+# :type     OUT_CURRENT_REFERENCE: string
+#
+#]]
 function(get_reference_of_latest_from_repo_and_current_from_json)
     #
     # Parse arguments.
@@ -1038,7 +1084,8 @@ function(get_reference_of_latest_from_repo_and_current_from_json)
     endforeach()
     unset(ARG)
     #
-    #
+    # Extract the current reference object from the input JSON content.
+    # Extract the latest reference object from the local repository.
     #
     get_json_value_by_dot_notation(
         IN_JSON_OBJECT                  "${GRLCJ_IN_JSON_CNT}"
@@ -1109,9 +1156,24 @@ function(get_reference_of_latest_from_repo_and_current_from_json)
 endfunction()
 
 
-#
+#[[[
 # Get Reference of POT and PO from Json.
 #
+# **Keyword Arguments**
+#
+# :keyword  IN_JSON_CNT:
+# :type     IN_JSON_CNT:
+# :keyword  IN_VERSION_TYPE:
+# :type     IN_VERSION_TYPE:
+# :keyword  OUT_POT_OBJECT:
+# :type     OUT_POT_OBJECT:
+# :keyword  OUT_POT_REFERENCE:
+# :type     OUT_POT_REFERENCE:
+# :keyword  OUT_PO_OBJECT:
+# :type     OUT_PO_OBJECT:
+# :keyword  OUT_PO_REFERENCE:
+# :type     OUT_PO_REFERENCE:
+#]]
 function(get_reference_of_pot_and_po_from_json)
     #
     # Parse arguments.
