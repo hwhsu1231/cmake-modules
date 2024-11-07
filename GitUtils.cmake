@@ -559,6 +559,8 @@ function(get_git_latest_commit_on_branch_name)
         ERROR_VARIABLE  ERR_VAR ERROR_STRIP_TRAILING_WHITESPACE)
     if(RES_VAR EQUAL 0)
         set(LATEST_COMMIT_TITLE ${OUT_VAR})
+        # Escape double quotes in the commit title
+        string(REPLACE "\"" "\\\"" LATEST_COMMIT_TITLE "${LATEST_COMMIT_TITLE}")
     else()
         string(APPEND FAILURE_REASON
         "The command failed with fatal errors.\n\n"
