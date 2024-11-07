@@ -110,7 +110,7 @@ function(create_git_worktree_for_l10n_branch)
     if(NOT RES_VAR EQUAL 0)
         remove_cmake_message_indent()
         message("")
-        message("The remote '${CGWLB_IN_REMOTE_URL}' doesn't exist.")
+        message("The remote '${CGWLB_IN_REMOTE_URL}' does NOT exist.")
         message("")
         restore_cmake_message_indent()
     else()
@@ -128,7 +128,7 @@ function(create_git_worktree_for_l10n_branch)
         if(NOT RES_VAR EQUAL 0)
             remove_cmake_message_indent()
             message("")
-            message("The branch 'l10n' doesn't exist in the remote.")
+            message("The branch 'l10n' does NOT exist in the remote.")
             message("")
             restore_cmake_message_indent()
         else()
@@ -174,7 +174,12 @@ function(create_git_worktree_for_l10n_branch)
                 if(RES_VAR EQUAL 0)
                     set(REMOTE_NAME "${OUT_VAR}")
                 else()
-                    message(FATAL_ERROR "${ERR_VAR}")
+                    string(APPEND FAILURE_REASON
+                    "The command failed with fatal errors.\n\n"
+                    "    result:\n\n${RES_VAR}\n\n"
+                    "    stdout:\n\n${OUT_VAR}\n\n"
+                    "    stderr:\n\n${ERR_VAR}")
+                    message(FATAL_ERROR "${FAILURE_REASON}")
                 endif()
                 message(STATUS "Adding fetch refspec 'refs/heads/l10n:refs/remotes/${REMOTE_NAME}/l10n'...")
                 remove_cmake_message_indent()
@@ -200,7 +205,12 @@ function(create_git_worktree_for_l10n_branch)
                         ECHO_ERROR_VARIABLE
                         COMMAND_ERROR_IS_FATAL ANY)
                 else()
-                    message(FATAL_ERROR "${ERR_VAR}")
+                    string(APPEND FAILURE_REASON
+                    "The command failed with fatal errors.\n\n"
+                    "    result:\n\n${RES_VAR}\n\n"
+                    "    stdout:\n\n${OUT_VAR}\n\n"
+                    "    stderr:\n\n${ERR_VAR}")
+                    message(FATAL_ERROR "${FAILURE_REASON}")
                 endif()
                 execute_process(
                     COMMAND ${Git_EXECUTABLE} config --get-all
@@ -703,60 +713,7 @@ function(get_git_latest_tag_on_tag_pattern)
         list(APPEND TAG_LIST ${TAG_NAME})
     endforeach()
     list(FILTER TAG_LIST INCLUDE REGEX "${GGLTTP_IN_TAG_PATTERN}")
-    message(STATUS "TAG_LIST = ${TAG_LIST}")
-    # list(SORT TAG_LIST COMPARE "NATURAL" ORDER "DESCENDING")
     list(GET TAG_LIST 0 LATEST_TAG)
-#[[
-    #
-    # Get the list of release tags. For example, v3.25.2.
-    # Get the list of candidate release tags. For example, v3.25.0-rc2.
-    #
-    set(TAG_REL_LIST "${TAG_LIST}")
-    set(TAG_RC_LIST "${TAG_LIST}")
-    list(FILTER TAG_RC_LIST  INCLUDE REGEX "-rc[0-9]+")
-    list(FILTER TAG_REL_LIST EXCLUDE REGEX "-rc[0-9]+")
-    #
-    # Get the max release candidate tag.
-    #
-    if(TAG_RC_LIST)
-        list(GET TAG_RC_LIST 0 TAG_RC_MAX)
-    else()
-        set(TAG_RC_MAX "")
-    endif()
-    #
-    # Get the max release tag.
-    #
-    if(TAG_REL_LIST)
-        list(GET TAG_REL_LIST 0 TAG_REL_MAX)
-    else()
-        set(TAG_REL_MAX "")
-    endif()
-    #
-    # - If ${TAG_REL_MAX} exists but ${TAG_RC_MAX} doesn't exist,
-    #   then set LATEST_TAG to ${TAG_REL_MAX}.
-    # - If ${TAG_REL_MAX} doesn't exist but ${TAG_RC_MAX} exists,
-    #   then set LATEST_TAG to ${TAG_RC_MAX}.
-    # - If both ${TAG_REL_MAX} and ${TAG_RC_MAX} exist,
-    #   then compare their version numbers:
-    #   - If TAG_REL_MAX_NUM <  TAG_RC_MAX_NUM, then set LATEST_TAG to ${TAG_RC_MAX}.
-    #   - If TAG_REL_MAX_NUM >= TAG_RC_MAX_NUM, then set LATEST_TAG to ${TAG_REL_MAX}.
-    #
-    if (NOT TAG_REL_MAX STREQUAL "" AND TAG_RC_MAX STREQUAL "")
-        set(LATEST_TAG ${TAG_REL_MAX})
-    elseif (TAG_REL_MAX STREQUAL "" AND NOT TAG_RC_MAX STREQUAL "")
-        set(LATEST_TAG ${TAG_RC_MAX})
-    elseif (NOT TAG_REL_MAX STREQUAL "" AND NOT TAG_RC_MAX STREQUAL "")
-        string(REGEX MATCH "([0-9]+\\.[0-9]+\\.[0-9]+)" TAG_RC_MAX_NUM ${TAG_RC_MAX})
-        string(REGEX MATCH "([0-9]+\\.[0-9]+\\.[0-9]+)" TAG_REL_MAX_NUM ${TAG_REL_MAX})
-        if (TAG_REL_MAX_NUM VERSION_LESS TAG_RC_MAX_NUM)
-            set(LATEST_TAG ${TAG_RC_MAX})
-        else()
-            set(LATEST_TAG ${TAG_REL_MAX})
-        endif()
-    else()
-        message(FATAL_ERROR "There is no available tag on IN_TAG_PATTERN. (${GGLTTP_IN_TAG_PATTERN})")
-    endif()
-#]]
     #
     # Return the ${LATEST_TAG} on OUT_TAG.
     #
