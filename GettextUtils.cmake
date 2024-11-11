@@ -5,13 +5,13 @@
 include_guard()
 
 
-function(update_sphinx_pot_from_src_to_dst)
+function(update_sphinx_pot_from_def_to_pkg)
     #
     # Parse arguments.
     #
     set(OPTIONS)
-    set(ONE_VALUE_ARGS      IN_SRC_FILE
-                            IN_DST_FILE
+    set(ONE_VALUE_ARGS      IN_DEF_FILE
+                            IN_PKG_FILE
                             IN_WRAP_WIDTH)
     set(MULTI_VALUE_ARGS)
     cmake_parse_arguments(USPFSTD
@@ -22,8 +22,8 @@ function(update_sphinx_pot_from_src_to_dst)
     #
     # Ensure all required arguments are provided.
     #
-    set(REQUIRED_ARGS       IN_SRC_FILE
-                            IN_DST_FILE
+    set(REQUIRED_ARGS       IN_DEF_FILE
+                            IN_PKG_FILE
                             IN_WRAP_WIDTH)
     foreach(ARG ${REQUIRED_ARGS})
         if(NOT DEFINED USPFSTD_${ARG})
@@ -39,23 +39,23 @@ function(update_sphinx_pot_from_src_to_dst)
     #
     #
     #
-    if(EXISTS "${USPFSTD_IN_SRC_FILE}")
+    if(EXISTS "${USPFSTD_IN_PKG_FILE}")
         #
         # Concatenate the package 'sphinx.pot' with the default 'sphinx.pot'.
         #
         message("msgcat:")
         message("  --use-first")
         message("  --width        ${USPFSTD_IN_WRAP_WIDTH}")
-        message("  --output-file  ${USPFSTD_IN_SRC_FILE}")
-        message("  [inputfile]    ${USPFSTD_IN_SRC_FILE}")
-        message("  [inputfile]    ${USPFSTD_IN_DST_FILE}")
+        message("  --output-file  ${USPFSTD_IN_PKG_FILE}")
+        message("  [inputfile]    ${USPFSTD_IN_PKG_FILE}")
+        message("  [inputfile]    ${USPFSTD_IN_DEF_FILE}")
         execute_process(
             COMMAND ${Gettext_MSGCAT_EXECUTABLE}
                     --use-first
                     --width=${USPFSTD_IN_WRAP_WIDTH}
-                    --output-file=${USPFSTD_IN_SRC_FILE}
-                    ${USPFSTD_IN_SRC_FILE}  # [inputfile]
-                    ${USPFSTD_IN_DST_FILE}  # [inputfile]
+                    --output-file=${USPFSTD_IN_PKG_FILE}
+                    ${USPFSTD_IN_PKG_FILE}  # [inputfile]
+                    ${USPFSTD_IN_DEF_FILE}  # [inputfile]
             RESULT_VARIABLE RES_VAR
             OUTPUT_VARIABLE OUT_VAR OUTPUT_STRIP_TRAILING_WHITESPACE
             ERROR_VARIABLE  ERR_VAR ERROR_STRIP_TRAILING_WHITESPACE)
@@ -75,13 +75,13 @@ function(update_sphinx_pot_from_src_to_dst)
         message("msgcat:")
         message("  --use-first")
         message("  --width        ${USPFSTD_IN_WRAP_WIDTH}")
-        message("  --output-file  ${USPFSTD_IN_SRC_FILE}")
-        message("  [inputfile]    ${USPFSTD_IN_DST_FILE}")
+        message("  --output-file  ${USPFSTD_IN_PKG_FILE}")
+        message("  [inputfile]    ${USPFSTD_IN_DEF_FILE}")
         execute_process(
             COMMAND ${Gettext_MSGCAT_EXECUTABLE}
                     --width=${USPFSTD_IN_WRAP_WIDTH}
-                    --output-file=${USPFSTD_IN_SRC_FILE}
-                    ${USPFSTD_IN_DST_FILE}
+                    --output-file=${USPFSTD_IN_PKG_FILE}
+                    ${USPFSTD_IN_DEF_FILE}
             RESULT_VARIABLE RES_VAR
             OUTPUT_VARIABLE OUT_VAR OUTPUT_STRIP_TRAILING_WHITESPACE
             ERROR_VARIABLE  ERR_VAR ERROR_STRIP_TRAILING_WHITESPACE)
