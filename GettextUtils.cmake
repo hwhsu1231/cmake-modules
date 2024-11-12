@@ -454,3 +454,235 @@ function(merge_po_from_compendium_to_locale)
     unset(LOCALE_PO_FILE)
 endfunction()
 
+
+function(caculate_statistic_info_of_gettext)
+    #
+    # Parse arguments.
+    #
+    set(OPTIONS)
+    set(ONE_VALUE_ARGS      IN_LOCALE_PO_DIR
+                            IN_PADDING_LENGTH
+                            OUT_NUM_OF_PO_COMPLETED
+                            OUT_NUM_OF_PO_PROGRESSING
+                            OUT_NUM_OF_PO_UNSTARTED
+                            OUT_NUM_OF_PO_TOTAL
+                            OUT_PCT_OF_PO_COMPLETED
+                            OUT_NUM_OF_MSGID_TRANSLATED
+                            OUT_NUM_OF_MSGID_FUZZY
+                            OUT_NUM_OF_MSGID_TOTAL
+                            OUT_PCT_OF_MSGID_TRANSLATED)
+    set(MULTI_VALUE_ARGS)
+    cmake_parse_arguments(CSIOG
+        "${OPTIONS}"
+        "${ONE_VALUE_ARGS}"
+        "${MULTI_VALUE_ARGS}"
+        ${ARGN})
+    #
+    # Ensure all required arguments are provided.
+    #
+    set(REQUIRED_ARGS       IN_LOCALE_PO_DIR
+                            IN_PADDING_LENGTH)
+    foreach(ARG ${REQUIRED_ARGS})
+        if(NOT DEFINED CSIOG_${ARG})
+            message(FATAL_ERROR "Missing ${ARG} argument.")
+        endif()
+    endforeach()
+    #
+    # Find msgattrib executable if not exists.
+    #
+    if (NOT EXISTS "${Gettext_MSGATTRIB_EXECUTABLE}")
+        find_package(Gettext QUIET MODULE REQUIRED COMPONENTS Msgattrib)
+    endif()
+    #
+    # Initialize the statistical infomation.
+    #
+    set(NUM_OF_PO_COMPLETED 0)      # Number     of completed   po    files
+    set(NUM_OF_PO_PROGRESSING 0)    # Number     of progressing po    files
+    set(NUM_OF_PO_UNSTARTED 0)      # Number     of unstarted   po    files
+    set(NUM_OF_PO_TOTAL 0)          # Number     of total       po    files
+    set(PCT_OF_PO_COMPLETED 0)      # Percentage of completed   po    files
+    set(NUM_OF_MSGID_TRANSLATED 0)  # Number     of translated  msgid entries
+    set(NUM_OF_MSGID_FUZZY 0)       # Number     of fuzzy       msgid entries
+    set(NUM_OF_MSGID_TOTAL 0)       # Number     of total       msgid entries
+    set(PCT_OF_MSGID_TRANSLATED 0)  # Percentage of translated  msgid entries
+    #
+    # Caculate the statistical infomation.
+    #
+    file(GLOB_RECURSE PO_FILES "${CSIOG_IN_LOCALE_PO_DIR}/*.po")
+    if(NOT PO_FILES)
+        message(FATAL_ERROR "PO_FILES is empty!")
+    endif()
+    foreach(PO_FILE ${PO_FILES})
+        #
+        # Calculate the total msgid entries.
+        #
+        execute_process(
+            COMMAND ${Gettext_MSGATTRIB_EXECUTABLE} --no-fuzzy --no-obsolete ${PO_FILE}
+            RESULT_VARIABLE TOTAL_MSGID_RES
+            OUTPUT_VARIABLE TOTAL_MSGID_OUT OUTPUT_STRIP_TRAILING_WHITESPACE
+            ERROR_VARIABLE  TOTAL_MSGID_ERR ERROR_STRIP_TRAILING_WHITESPACE)
+        if(TOTAL_MSGID_RES EQUAL 0)
+            if(TOTAL_MSGID_OUT)
+                string(REGEX MATCHALL "msgid" TOTAL_MSGID_MATCHES "${TOTAL_MSGID_OUT}")
+                list(LENGTH TOTAL_MSGID_MATCHES TOTAL_MSGID_COUNT)
+                math(EXPR TOTAL_MSGID_COUNT "${TOTAL_MSGID_COUNT} - 1") # Subtract 1 for the header msgid
+                math(EXPR NUM_OF_MSGID_TOTAL "${NUM_OF_MSGID_TOTAL} + ${TOTAL_MSGID_COUNT}")
+            else()
+                set(TOTAL_MSGID_COUNT 0)
+            endif()
+        else()
+            string(APPEND FAILURE_REASON
+            "The command failed with fatal errors.\n\n"
+            "    result:\n\n${TOTAL_MSGID_RES}\n\n"
+            "    stdout:\n\n${TOTAL_MSGID_OUT}\n\n"
+            "    stderr:\n\n${TOTAL_MSGID_ERR}")
+            message(FATAL_ERROR "${FAILURE_REASON}")
+        endif()
+        #
+        # Calculate the "translated" msgid entries
+        #
+        execute_process(
+            COMMAND ${Gettext_MSGATTRIB_EXECUTABLE} --translated ${PO_FILE}
+            RESULT_VARIABLE TRANSLATED_MSGID_RES
+            OUTPUT_VARIABLE TRANSLATED_MSGID_OUT OUTPUT_STRIP_TRAILING_WHITESPACE
+            ERROR_VARIABLE  TRANSLATED_MSGID_ERR ERROR_STRIP_TRAILING_WHITESPACE)
+        if(TRANSLATED_MSGID_RES EQUAL 0)
+            if(TRANSLATED_MSGID_OUT)
+                string(REGEX MATCHALL "msgid" TRANSLATED_MSGID_MATCHES "${TRANSLATED_MSGID_OUT}")
+                list(LENGTH TRANSLATED_MSGID_MATCHES TRANSLATED_MSGID_COUNT)
+                math(EXPR TRANSLATED_MSGID_COUNT "${TRANSLATED_MSGID_COUNT} - 1") # Subtract 1 for the header msgid
+                math(EXPR NUM_OF_MSGID_TRANSLATED "${NUM_OF_MSGID_TRANSLATED} + ${TRANSLATED_MSGID_COUNT}")
+            else()
+                set(TRANSLATED_MSGID_COUNT 0)
+            endif()
+        else()
+            string(APPEND FAILURE_REASON
+            "The command failed with fatal errors.\n\n"
+            "    result:\n\n${TRANSLATED_MSGID_RES}\n\n"
+            "    stdout:\n\n${TRANSLATED_MSGID_OUT}\n\n"
+            "    stderr:\n\n${TRANSLATED_MSGID_ERR}")
+            message(FATAL_ERROR "${FAILURE_REASON}")
+        endif()
+        #
+        # Calculate the "fuzzy" msgid entries.
+        #
+        execute_process(
+            COMMAND ${Gettext_MSGATTRIB_EXECUTABLE} --only-fuzzy --no-obsolete ${PO_FILE}
+            RESULT_VARIABLE FUZZY_MSGID_RES
+            OUTPUT_VARIABLE FUZZY_MSGID_OUT OUTPUT_STRIP_TRAILING_WHITESPACE
+            ERROR_VARIABLE  FUZZY_MSGID_ERR ERROR_STRIP_TRAILING_WHITESPACE)
+        if(FUZZY_MSGID_RES EQUAL 0)
+            if(FUZZY_MSGID_OUT)
+                string(REGEX MATCHALL "msgid" FUZZY_MSGID_MATCHES ${FUZZY_MSGID_OUT})
+                list(LENGTH FUZZY_MSGID_MATCHES FUZZY_MSGID_COUNT)
+                math(EXPR FUZZY_MSGID_COUNT "${FUZZY_MSGID_COUNT} - 1") # Subtract 1 for the header msgid
+                math(EXPR NUM_OF_MSGID_FUZZY "${NUM_OF_MSGID_FUZZY} + ${FUZZY_MSGID_COUNT}")
+                return()
+            else()
+                set(FUZZY_MSGID_COUNT 0)
+            endif()
+        else()
+            string(APPEND FAILURE_REASON
+            "The command failed with fatal errors.\n\n"
+            "    result:\n\n${FUZZY_MSGID_RES}\n\n"
+            "    stdout:\n\n${FUZZY_MSGID_OUT}\n\n"
+            "    stderr:\n\n${FUZZY_MSGID_ERR}")
+            message(FATAL_ERROR "${FAILURE_REASON}")
+        endif()
+        #
+        #
+        #
+        if(NOT TOTAL_MSGID_RES AND NOT TRANSLATED_MSGID_RES)
+            math(EXPR TRANSLATED_MSGID_PCT "100 * ${TRANSLATED_MSGID_COUNT} / ${TOTAL_MSGID_COUNT}")
+            #
+            # Prepend leading whitespaces to the 'PERCENTAGE_STR' until its length is ${CSIOG_IN_PADDING_LENGTH}
+            #
+            set(PERCENTAGE_STR "${TRANSLATED_MSGID_PCT}")
+            string(LENGTH "${PERCENTAGE_STR}" PERCENTAGE_LEN)
+            while("${PERCENTAGE_LEN}" LESS ${CSIOG_IN_PADDING_LENGTH})
+                string(PREPEND PERCENTAGE_STR " ")
+                string(LENGTH "${PERCENTAGE_STR}" PERCENTAGE_LEN)
+            endwhile()
+            #
+            # Prepend leading whitespaces to the 'TRANSLATED_MSGID_STR' until its length is ${CSIOG_IN_PADDING_LENGTH}
+            #
+            set(TRANSLATED_MSGID_STR "${TRANSLATED_MSGID_COUNT}")
+            string(LENGTH "${TRANSLATED_MSGID_STR}" TRANSLATED_MSGID_LEN)
+            while("${TRANSLATED_MSGID_LEN}" LESS ${CSIOG_IN_PADDING_LENGTH})
+                string(PREPEND TRANSLATED_MSGID_STR " ")
+                string(LENGTH "${TRANSLATED_MSGID_STR}" TRANSLATED_MSGID_LEN)
+            endwhile()
+            #
+            # Prepend leading whitespaces to the 'TOTAL_MSGID_STR' until its length is ${CSIOG_IN_PADDING_LENGTH}
+            #
+            set(TOTAL_MSGID_STR "${TOTAL_MSGID_COUNT}")
+            string(LENGTH "${TOTAL_MSGID_STR}" TOTAL_MSGID_LEN)
+            while("${TOTAL_MSGID_LEN}" LESS ${CSIOG_IN_PADDING_LENGTH})
+                string(PREPEND TOTAL_MSGID_STR " ")
+                string(LENGTH "${TOTAL_MSGID_STR}" TOTAL_MSGID_LEN)
+            endwhile()
+            #
+            # Example out:
+            # - [  0%][  0/ 99] path/to/po/file
+            # - [ 30%][ 33/ 99] path/to/po/file
+            # - [100%][ 99/ 99] path/to/po/file
+            #
+            message("[${PERCENTAGE_STR}%][${TRANSLATED_MSGID_STR}/${TOTAL_MSGID_STR}] ${PO_FILE}")
+            #
+            # Increment counters
+            #
+            if(TRANSLATED_MSGID_PCT EQUAL 100)
+                math(EXPR NUM_OF_PO_COMPLETED "${NUM_OF_PO_COMPLETED} + 1")
+            elseif(TRANSLATED_MSGID_PCT EQUAL 0)
+                math(EXPR NUM_OF_PO_UNSTARTED "${NUM_OF_PO_UNSTARTED} + 1")
+            else()
+                math(EXPR NUM_OF_PO_PROGRESSING "${NUM_OF_PO_PROGRESSING} + 1")
+            endif()
+            math(EXPR NUM_OF_PO_TOTAL "${NUM_OF_PO_TOTAL} + 1")
+        else()
+            message(WARNING "Failed to get msgid counts for ${PO_FILE}.")
+        endif()
+    endforeach()
+    unset(PO_FILE)
+    math(EXPR NUM_OF_MSGID_UNTRANSLATED "${NUM_OF_MSGID_TOTAL} - ${NUM_OF_MSGID_TRANSLATED}")
+    math(EXPR PCT_OF_PO_COMPLETED "(${NUM_OF_PO_COMPLETED} * 100) / ${NUM_OF_PO_TOTAL}")
+    math(EXPR PCT_OF_MSGID_TRANSLATED "(${NUM_OF_MSGID_TRANSLATED} * 100) / ${NUM_OF_MSGID_TOTAL}")
+    #
+    # Return the content of ${NUM_OF_PO_COMPLETED}      to CSIOG_OUT_NUM_OF_PO_COMPLETED.
+    # Return the content of ${NUM_OF_PO_PROGRESSING}    to CSIOG_OUT_NUM_OF_PO_PROGRESSING.
+    # Return the content of ${NUM_OF_PO_UNSTARTED}      to CSIOG_OUT_NUM_OF_PO_UNSTARTED.
+    # Return the content of ${NUM_OF_PO_TOTAL}          to CSIOG_OUT_NUM_OF_PO_TOTAL.
+    # Return the content of ${PCT_OF_PO_COMPLETED}      to CSIOG_OUT_PCT_OF_PO_COMPLETED.
+    # Return the content of ${NUM_OF_MSGID_TRANSLATED}  to CSIOG_OUT_NUM_OF_MSGID_TRANSLATED.
+    # Return the content of ${NUM_OF_MSGID_FUZZY}       to CSIOG_OUT_NUM_OF_MSGID_FUZZY.
+    # Return the content of ${NUM_OF_MSGID_TOTAL}       to CSIOG_OUT_NUM_OF_MSGID_TOTAL.
+    # Return the content of ${PCT_OF_MSGID_TRANSLATED}  to CSIOG_OUT_PCT_OF_MSGID_TRANSLATED.
+    #
+    if(CSIOG_OUT_NUM_OF_PO_COMPLETED)
+        set(${CSIOG_OUT_NUM_OF_PO_COMPLETED} "${NUM_OF_PO_COMPLETED}" PARENT_SCOPE)
+    endif()
+    if(CSIOG_OUT_NUM_OF_PO_PROGRESSING)
+        set(${CSIOG_OUT_NUM_OF_PO_PROGRESSING} "${NUM_OF_PO_PROGRESSING}" PARENT_SCOPE)
+    endif()
+    if(CSIOG_OUT_NUM_OF_PO_UNSTARTED)
+        set(${CSIOG_OUT_NUM_OF_PO_UNSTARTED} "${NUM_OF_PO_UNSTARTED}" PARENT_SCOPE)
+    endif()
+    if(CSIOG_OUT_NUM_OF_PO_TOTAL)
+        set(${CSIOG_OUT_NUM_OF_PO_TOTAL} "${NUM_OF_PO_TOTAL}" PARENT_SCOPE)
+    endif()
+    if(CSIOG_OUT_PCT_OF_PO_COMPLETED)
+        set(${CSIOG_OUT_PCT_OF_PO_COMPLETED} "${PCT_OF_PO_COMPLETED}" PARENT_SCOPE)
+    endif()
+    if(CSIOG_OUT_NUM_OF_MSGID_TRANSLATED)
+        set(${CSIOG_OUT_NUM_OF_MSGID_TRANSLATED} "${NUM_OF_MSGID_TRANSLATED}" PARENT_SCOPE)
+    endif()
+    if(CSIOG_OUT_NUM_OF_MSGID_FUZZY)
+        set(${CSIOG_OUT_NUM_OF_MSGID_FUZZY} "${NUM_OF_MSGID_FUZZY}" PARENT_SCOPE)
+    endif()
+    if(CSIOG_OUT_NUM_OF_MSGID_TOTAL)
+        set(${CSIOG_OUT_NUM_OF_MSGID_TOTAL} "${NUM_OF_MSGID_TOTAL}" PARENT_SCOPE)
+    endif()
+    if(CSIOG_OUT_PCT_OF_MSGID_TRANSLATED)
+        set(${CSIOG_OUT_PCT_OF_MSGID_TRANSLATED} "${PCT_OF_MSGID_TRANSLATED}" PARENT_SCOPE)
+    endif()
+endfunction()
