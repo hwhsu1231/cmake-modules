@@ -686,3 +686,42 @@ function(caculate_statistic_info_of_gettext)
         set(${CSIOG_OUT_PCT_OF_MSGID_TRANSLATED} "${PCT_OF_MSGID_TRANSLATED}" PARENT_SCOPE)
     endif()
 endfunction()
+
+
+function(copy_po_from_src_to_dst)
+    #
+    # Parse arguments.
+    #
+    set(OPTIONS)
+    set(ONE_VALUE_ARGS      IN_SRC_DIR
+                            IN_DST_DIR)
+    set(MULTI_VALUE_ARGS)
+    cmake_parse_arguments(CPFSTD
+        "${OPTIONS}"
+        "${ONE_VALUE_ARGS}"
+        "${MULTI_VALUE_ARGS}"
+        ${ARGN})
+    #
+    # Ensure all required arguments are provided.
+    #
+    set(REQUIRED_ARGS       IN_SRC_DIR
+                            IN_DST_DIR)
+    foreach(ARG ${REQUIRED_ARGS})
+        if(NOT DEFINED CPFSTD_${ARG})
+            message(FATAL_ERROR "Missing ${ARG} argument.")
+        endif()
+    endforeach()
+    #
+    #
+    #
+    file(GLOB_RECURSE PO_SRC_FILES "${CPFSTD_IN_SRC_DIR}/*.po")
+    foreach(PO_SRC_FILE ${PO_SRC_FILES})
+        string(REPLACE "${CPFSTD_IN_SRC_DIR}/" "" PO_SRC_FILE_RELATIVE "${PO_SRC_FILE}")
+        set(PO_DST_FILE "${CPFSTD_IN_DST_DIR}/${PO_SRC_FILE_RELATIVE}")
+        get_filename_component(PO_DST_FILE_DIR "${PO_DST_FILE}" DIRECTORY)
+        file(MAKE_DIRECTORY "${PO_DST_FILE_DIR}")
+        file(COPY_FILE "${PO_SRC_FILE}" "${PO_DST_FILE}" RESULT RES_VAR)
+        message("Copied: ${PO_DST_FILE}")
+    endforeach()
+    unset(PO_SRC_FILE)
+endfunction()
