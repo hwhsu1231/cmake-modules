@@ -735,7 +735,6 @@ function(switch_to_git_reference_on_branch)
         "${ONE_VALUE_ARGS}"
         "${MULTI_VALUE_ARGS}"
         ${ARGN})
-    message(STATUS "SGRB_NO_SUBMODULE = ${SGRB_NO_SUBMODULE}")
     #
     # Ensure all required arguments are provided.
     #
@@ -815,5 +814,94 @@ function(switch_to_git_reference_on_branch)
             ECHO_OUTPUT_VARIABLE
             ECHO_ERROR_VARIABLE
             COMMAND_ERROR_IS_FATAL ANY)
+    endif()
+endfunction()
+
+
+function(clone_repository_from_remote_to_local)
+    #
+    # Parse arguments.
+    #
+    set(OPTIONS             NO_SUBMODULE)
+    set(ONE_VALUE_ARGS      IN_LOCAL_PATH
+                            IN_REMOTE_URL)
+    set(MULTI_VALUE_ARGS)
+    cmake_parse_arguments(CRFRTL
+        "${OPTIONS}"
+        "${ONE_VALUE_ARGS}"
+        "${MULTI_VALUE_ARGS}"
+        ${ARGN})
+    #
+    # Ensure all required arguments are provided.
+    #
+    set(REQUIRED_ARGS       IN_LOCAL_PATH
+                            IN_REMOTE_URL)
+    foreach(ARG ${REQUIRED_ARGS})
+        if(NOT DEFINED CRFRTL_${ARG})
+            message(FATAL_ERROR "Missing ${ARG} argument.")
+        endif()
+    endforeach()
+    unset(ARG)
+    #
+    # Find Git executable if not exists.
+    #
+    if(NOT EXISTS "${Git_EXECUTABLE}")
+        find_package(Git QUIET MODULE REQUIRED)
+    endif()
+    #
+    #
+    #
+    if (NOT CRFRTL_NO_SUBMODULE)
+        set(SUBMODULE_ARGS  --recurse-submodules
+                            --shallow-submodules)
+    endif()
+    #
+    #
+    #
+    if(NOT EXISTS "${CRFRTL_IN_LOCAL_PATH}/.git")
+        file(MAKE_DIRECTORY "${CRFRTL_IN_LOCAL_PATH}")
+        execute_process(
+            COMMAND ${Git_EXECUTABLE} clone
+                    --depth=1
+                    --single-branch
+                    ${SUBMODULE_ARGS}
+                    ${CRFRTL_IN_REMOTE_URL}
+                    ${CRFRTL_IN_LOCAL_PATH}
+            WORKING_DIRECTORY ${CRFRTL_IN_LOCAL_PATH}
+            ECHO_OUTPUT_VARIABLE
+            ECHO_ERROR_VARIABLE
+            COMMAND_ERROR_IS_FATAL ANY)
+    else()
+        set(CHANGED_REMOTE_URL "${CRFRTL_IN_REMOTE_URL}")
+        execute_process(
+            COMMAND ${Git_EXECUTABLE} remote
+            WORKING_DIRECTORY ${CRFRTL_IN_LOCAL_PATH}
+            OUTPUT_VARIABLE REMOTE_NAME OUTPUT_STRIP_TRAILING_WHITESPACE)
+        execute_process(
+            COMMAND ${Git_EXECUTABLE} remote get-url ${REMOTE_NAME}
+            WORKING_DIRECTORY ${CRFRTL_IN_LOCAL_PATH}
+            OUTPUT_VARIABLE CURRENT_REMOTE_URL OUTPUT_STRIP_TRAILING_WHITESPACE)
+        if (NOT "${CHANGED_REMOTE_URL}" STREQUAL "${CURRENT_REMOTE_URL}")
+            message("The remote URL has changed:")
+            message("")
+            message("CHANGED_REMOTE_URL = ${CHANGED_REMOTE_URL}")
+            message("CURRENT_REMOTE_URL = ${CURRENT_REMOTE_URL}")
+            message("")
+            file(REMOVE_RECURSE "${CRFRTL_IN_LOCAL_PATH}")
+            file(MAKE_DIRECTORY "${CRFRTL_IN_LOCAL_PATH}")
+            execute_process(
+                COMMAND ${Git_EXECUTABLE} clone
+                        --depth=1
+                        --single-branch
+                        ${SUBMODULE_ARGS}
+                        ${CRFRTL_IN_REMOTE_URL}
+                        ${CRFRTL_IN_LOCAL_PATH}
+                WORKING_DIRECTORY ${CRFRTL_IN_LOCAL_PATH}
+                ECHO_OUTPUT_VARIABLE
+                ECHO_ERROR_VARIABLE
+                COMMAND_ERROR_IS_FATAL ANY)
+        else()
+            message("The repository is already cloned in '${CRFRTL_IN_LOCAL_PATH}/'.")
+        endif()
     endif()
 endfunction()
