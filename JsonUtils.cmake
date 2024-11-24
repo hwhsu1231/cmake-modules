@@ -174,9 +174,9 @@ include_guard()
 include(GitUtils)
 
 
-#
+#[[[
 # Initialize a references.json file.
-#
+#]]
 function(init_references_json_file)
     #
     # Parse arguments.
@@ -641,9 +641,23 @@ function(get_members_of_json_object)
 endfunction()
 
 
-#
+#[[[
 # Set members of JSON object for 'commit'.
 #
+# **Keyword Arguments**
+#
+# :keyword  IN_MEMBER_DATE: (Required)
+# :type     IN_MEMBER_DATE: string
+#
+# :keyword  IN_MEMBER_HASH: (Required)
+# :type     IN_MEMBER_HASH: string
+#
+# :keyword  IN_MEMBER_TITLE: (Required)
+# :type     IN_MEMBER_TITLE: string
+#
+# :keyword  OUT_JSON_OBJECT: (Required)
+# :type     OUT_JSON_OBJECT: JSON object
+#]]
 function(set_members_of_commit_json_object)
     #
     # Parse arguments.
@@ -751,9 +765,26 @@ function(set_members_of_reference_json_object)
 endfunction()
 
 
-#
+#[[[
 # Dot Notation Setter.
 #
+# **Keyword Arguments**
+#
+# :keyword  ERROR_VARIABLE: (Optional)
+# :type     ERROR_VARIABLE: string
+#
+# :keyword  IN_JSON_OBJECT: (Required)
+# :type     IN_JSON_OBJECT: string
+#
+# :keyword  IN_DOT_NOTATION: (Required)
+# :type     IN_DOT_NOTATION: string
+#
+# :keyword  IN_JSON_VALUE: (Required)
+# :type     IN_JSON_VALUE: string
+#
+# :keyword  OUT_JSON_OBJECT: (Required)
+# :type     OUT_JSON_OBJECT: string
+#]]
 function(set_json_value_by_dot_notation)
     #
     # Parse arguments.
@@ -784,7 +815,7 @@ function(set_json_value_by_dot_notation)
     endforeach()
     unset(_ARG)
     #
-    # Ensure all required arguments are provided.
+    # Ensure the dot notation starts with a '.'.
     #
     if(SJVBDN_IN_DOT_NOTATION MATCHES "^\\.")
         string(SUBSTRING "${SJVBDN_IN_DOT_NOTATION}" 1 -1 SJVBDN_IN_DOT_NOTATION_NO_1ST_DOT)
@@ -1161,18 +1192,23 @@ endfunction()
 #
 # **Keyword Arguments**
 #
-# :keyword  IN_JSON_CNT:
-# :type     IN_JSON_CNT:
-# :keyword  IN_VERSION_TYPE:
-# :type     IN_VERSION_TYPE:
-# :keyword  OUT_POT_OBJECT:
-# :type     OUT_POT_OBJECT:
-# :keyword  OUT_POT_REFERENCE:
-# :type     OUT_POT_REFERENCE:
-# :keyword  OUT_PO_OBJECT:
-# :type     OUT_PO_OBJECT:
-# :keyword  OUT_PO_REFERENCE:
-# :type     OUT_PO_REFERENCE:
+# :keyword  IN_JSON_CNT: (Required)
+# :type     IN_JSON_CNT: string
+#
+# :keyword  IN_VERSION_TYPE: (Required)
+# :type     IN_VERSION_TYPE: string
+#
+# :keyword  OUT_POT_OBJECT: (Optional)
+# :type     OUT_POT_OBJECT: string
+#
+# :keyword  OUT_POT_REFERENCE: (Optional)
+# :type     OUT_POT_REFERENCE: string
+#
+# :keyword  OUT_PO_OBJECT: (Optional)
+# :type     OUT_PO_OBJECT: string
+#
+# :keyword  OUT_PO_REFERENCE: (Optional)
+# :type     OUT_PO_REFERENCE: string
 #]]
 function(get_reference_of_pot_and_po_from_json)
     #
@@ -1203,7 +1239,8 @@ function(get_reference_of_pot_and_po_from_json)
     endforeach()
     unset(ARG)
     #
-    #
+    # Extract '.pot' and '.po' objects and their references (commit hash or tag)
+    # from the input JSON, based on the specified version type and language.
     #
     get_json_value_by_dot_notation(
         IN_JSON_OBJECT              "${GRPPJ_IN_JSON_CNT}"
