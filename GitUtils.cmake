@@ -849,16 +849,17 @@ function(clone_repository_from_remote_to_local)
         find_package(Git QUIET MODULE REQUIRED)
     endif()
     #
-    #
+    # If NO_SUBMODULE is not set, include additional options for cloning submodules.
     #
     if (NOT CRFRTL_NO_SUBMODULE)
         set(SUBMODULE_ARGS  --recurse-submodules
                             --shallow-submodules)
     endif()
     #
-    #
+    # Check if the repository's '.git' directory exists.
     #
     if(NOT EXISTS "${CRFRTL_IN_LOCAL_PATH}/.git")
+        file(REMOVE_RECURSE "${CRFRTL_IN_LOCAL_PATH}")
         file(MAKE_DIRECTORY "${CRFRTL_IN_LOCAL_PATH}")
         execute_process(
             COMMAND ${Git_EXECUTABLE} clone
@@ -872,7 +873,10 @@ function(clone_repository_from_remote_to_local)
             ECHO_ERROR_VARIABLE
             COMMAND_ERROR_IS_FATAL ANY)
     else()
-        set(CHANGED_REMOTE_URL "${CRFRTL_IN_REMOTE_URL}")
+        #
+        # If the '.git' directory exists, then verify the specified URL and the current one.
+        #
+        set(SPECIFIED_REMOTE_URL "${CRFRTL_IN_REMOTE_URL}")
         execute_process(
             COMMAND ${Git_EXECUTABLE} remote
             WORKING_DIRECTORY ${CRFRTL_IN_LOCAL_PATH}
@@ -881,11 +885,14 @@ function(clone_repository_from_remote_to_local)
             COMMAND ${Git_EXECUTABLE} remote get-url ${REMOTE_NAME}
             WORKING_DIRECTORY ${CRFRTL_IN_LOCAL_PATH}
             OUTPUT_VARIABLE CURRENT_REMOTE_URL OUTPUT_STRIP_TRAILING_WHITESPACE)
-        if (NOT "${CHANGED_REMOTE_URL}" STREQUAL "${CURRENT_REMOTE_URL}")
+        if (NOT "${SPECIFIED_REMOTE_URL}" STREQUAL "${CURRENT_REMOTE_URL}")
+            #
+            # If they differ, then remove the existing repository and re-clone.
+            #
             message("The remote URL has changed:")
             message("")
-            message("CHANGED_REMOTE_URL = ${CHANGED_REMOTE_URL}")
-            message("CURRENT_REMOTE_URL = ${CURRENT_REMOTE_URL}")
+            message("SPECIFIED_REMOTE_URL = ${SPECIFIED_REMOTE_URL}")
+            message("CURRENT_REMOTE_URL   = ${CURRENT_REMOTE_URL}")
             message("")
             file(REMOVE_RECURSE "${CRFRTL_IN_LOCAL_PATH}")
             file(MAKE_DIRECTORY "${CRFRTL_IN_LOCAL_PATH}")
@@ -901,6 +908,9 @@ function(clone_repository_from_remote_to_local)
                 ECHO_ERROR_VARIABLE
                 COMMAND_ERROR_IS_FATAL ANY)
         else()
+            #
+            # If they match, log a message indicating no further action is needed.
+            #
             message("The repository is already cloned in '${CRFRTL_IN_LOCAL_PATH}/'.")
         endif()
     endif()
