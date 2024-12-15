@@ -98,6 +98,44 @@ function(update_sphinx_pot_from_def_to_pkg)
 endfunction()
 
 
+function(override_header_entry_from_src_to_dst)
+    #
+    # Parse arguments.
+    #
+    set(OPTIONS)
+    set(ONE_VALUE_ARGS      IN_SRC_FILE
+                            IN_DST_FILE)
+    set(MULTI_VALUE_ARGS)
+    cmake_parse_arguments(OHESD
+        "${OPTIONS}"
+        "${ONE_VALUE_ARGS}"
+        "${MULTI_VALUE_ARGS}"
+        ${ARGN})
+    #
+    # Ensure all required arguments are provided.
+    #
+    set(REQUIRED_ARGS       IN_SRC_FILE
+                            IN_DST_FILE)
+    foreach(ARG ${REQUIRED_ARGS})
+        if(NOT DEFINED OHESD_${ARG})
+            message(FATAL_ERROR "Missing ${ARG} argument.")
+        endif()
+    endforeach()
+    #
+    #
+    #
+    file(READ ${OHESD_IN_SRC_FILE} IN_SRC_FILE_CNT)
+    file(READ ${OHESD_IN_DST_FILE} IN_DST_FILE_CNT)
+    set(HEADER_ENTRY_NAME   "Project-Id-Version")
+    string(REGEX MATCH      "${HEADER_ENTRY_NAME}: [^\\]+" HEADER_ENTRY_LINE ${IN_SRC_FILE_CNT})
+    string(REGEX REPLACE    "${HEADER_ENTRY_NAME}: " "" HEADER_ENTRY_VALUE ${HEADER_ENTRY_LINE})
+    string(REGEX REPLACE    "${HEADER_ENTRY_NAME}: [^\\]+"
+                            "${HEADER_ENTRY_NAME}: ${HEADER_ENTRY_VALUE}"
+                            IN_DST_FILE_CNT "${IN_DST_FILE_CNT}")
+    file(WRITE ${OHESD_IN_DST_FILE} "${IN_DST_FILE_CNT}")
+endfunction()
+
+
 function(update_pot_from_src_to_dst)
     #
     # Parse arguments.
@@ -171,6 +209,9 @@ function(update_pot_from_src_to_dst)
                 "    stderr:\n\n${ERR_VAR}")
                 message(FATAL_ERROR "${FAILURE_REASON}")
             endif()
+            override_header_entry_from_src_to_dst(
+                IN_SRC_FILE   "${SRC_FILE}"
+                IN_DST_FILE   "${DST_FILE}")
         else()
             #
             # If the ${DST_FILE} doesn't exist, then create it using msgcat.
@@ -281,6 +322,9 @@ function(update_po_from_pot_in_locale)
                 "    stderr:\n\n${ERR_VAR}")
                 message(FATAL_ERROR "${FAILURE_REASON}")
             endif()
+            override_header_entry_from_src_to_dst(
+                IN_SRC_FILE   "${POT_FILE}"
+                IN_DST_FILE   "${PO_FILE}")
         else()
             #
             # If the ${PO_FILE} doesn't exist, then create it using msgcat.
