@@ -499,6 +499,98 @@ function(merge_po_from_compendium_to_locale)
 endfunction()
 
 
+function(merge_po_from_src_to_dst_with_compendium)
+    #
+    # Parse arguments.
+    #
+    set(OPTIONS)
+    set(ONE_VALUE_ARGS      IN_SRC_LOCALE_PO_DIR
+                            IN_SRC_COMPEND_PO_FILE
+                            IN_DST_LOCALE_PO_DIR
+                            IN_DST_LOCALE_POT_DIR
+                            IN_LANGUAGE
+                            IN_WRAP_WIDTH)
+    set(MULTI_VALUE_ARGS)
+    cmake_parse_arguments(MPFSDC
+        "${OPTIONS}"
+        "${ONE_VALUE_ARGS}"
+        "${MULTI_VALUE_ARGS}"
+        ${ARGN})
+    #
+    # Ensure all required arguments are provided.
+    #
+    set(REQUIRED_ARGS       IN_SRC_COMPEND_PO_FILE
+                            IN_DST_LOCALE_PO_DIR
+                            IN_DST_LOCALE_POT_DIR
+                            IN_LANGUAGE
+                            IN_WRAP_WIDTH)
+    foreach(ARG ${REQUIRED_ARGS})
+        if(NOT DEFINED MPFSDC_${ARG})
+            message(FATAL_ERROR "Missing ${ARG} argument.")
+        endif()
+    endforeach()
+    #
+    # Find msgmerge executable if not exists.
+    #
+    if (NOT EXISTS "${Gettext_MSGMERGE_EXECUTABLE}")
+        find_package(Gettext QUIET MODULE REQUIRED COMPONENTS Msgmerge)
+    endif()
+    #
+    #
+    #
+    file(GLOB_RECURSE DST_LOCALE_PO_FILES "${MPFSDC_IN_DST_LOCALE_PO_DIR}/*.po")
+    foreach(DST_LOCALE_PO_FILE ${DST_LOCALE_PO_FILES})
+        string(REPLACE "${MPFSDC_IN_DST_LOCALE_PO_DIR}/" "" PO_FILE_RELATIVE "${DST_LOCALE_PO_FILE}")
+        string(REGEX REPLACE "\\.po$" ".pot" POT_FILE_RELATIVE "${PO_FILE_RELATIVE}")
+        set(SRC_LOCALE_PO_FILE      "${MPFSDC_IN_SRC_LOCALE_PO_DIR}/${PO_FILE_RELATIVE}")
+        set(DST_LOCALE_PO_FILE      "${MPFSDC_IN_DST_LOCALE_PO_DIR}/${PO_FILE_RELATIVE}")
+        set(DST_LOCALE_POT_FILE     "${MPFSDC_IN_DST_LOCALE_POT_DIR}/${POT_FILE_RELATIVE}")
+        if (EXISTS "${SRC_LOCALE_PO_FILE}")
+        set(SRC_COMPEND_PO_FILE     "${SRC_LOCALE_PO_FILE}")
+        else()
+        set(SRC_COMPEND_PO_FILE     "${MPFSDC_IN_SRC_COMPEND_PO_FILE}")
+        endif()
+        message("msgmerge:")
+        message("  --quiet")
+        message("  --lang           ${MPFSDC_IN_LANGUAGE}")
+        message("  --width          ${MPFSDC_IN_WRAP_WIDTH}")
+        message("  --compendium     ${SRC_COMPEND_PO_FILE}")
+        message("  --output-file    ${DST_LOCALE_PO_FILE}")
+        message("  [def.po]         ${DST_LOCALE_POT_FILE}")
+        message("  [ref.pot]        ${DST_LOCALE_POT_FILE}")
+        execute_process(
+            COMMAND ${Gettext_MSGMERGE_EXECUTABLE}
+                    --quiet   # Suppress progress indicator
+                    --lang=${MPFSDC_IN_LANGUAGE}
+                    --width=${MPFSDC_IN_WRAP_WIDTH}
+                    --compendium=${MPFSDC_IN_SRC_COMPEND_PO_FILE}
+                    --output-file=${DST_LOCALE_PO_FILE}
+                    ${DST_LOCALE_POT_FILE}  # [def.po]
+                    ${DST_LOCALE_POT_FILE}  # [ref.pot]
+            RESULT_VARIABLE RES_VAR
+            OUTPUT_VARIABLE OUT_VAR OUTPUT_STRIP_TRAILING_WHITESPACE
+            ERROR_VARIABLE  ERR_VAR ERROR_STRIP_TRAILING_WHITESPACE)
+        if(RES_VAR EQUAL 0)
+            if(ERR_VAR)
+                string(APPEND WARNING_REASON
+                "The command succeeded but had some warnings.\n\n"
+                "    result:\n\n${RES_VAR}\n\n"
+                "    stderr:\n\n${ERR_VAR}")
+                message("${WARNING_REASON}")
+            endif()
+        else()
+            string(APPEND FAILURE_REASON
+            "The command failed with fatal errors.\n\n"
+            "    result:\n\n${RES_VAR}\n\n"
+            "    stdout:\n\n${OUT_VAR}\n\n"
+            "    stderr:\n\n${ERR_VAR}")
+            message(FATAL_ERROR "${FAILURE_REASON}")
+        endif()
+    endforeach()
+    unset(DST_LOCALE_PO_FILE)
+endfunction()
+
+
 function(caculate_statistic_info_of_gettext)
     #
     # Parse arguments.
