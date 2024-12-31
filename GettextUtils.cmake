@@ -563,7 +563,7 @@ function(merge_po_from_src_to_dst_with_compendium)
                     --quiet   # Suppress progress indicator
                     --lang=${MPFSDC_IN_LANGUAGE}
                     --width=${MPFSDC_IN_WRAP_WIDTH}
-                    --compendium=${MPFSDC_IN_SRC_COMPEND_PO_FILE}
+                    --compendium=${SRC_COMPEND_PO_FILE}
                     --output-file=${DST_LOCALE_PO_FILE}
                     ${DST_LOCALE_POT_FILE}  # [def.po]
                     ${DST_LOCALE_POT_FILE}  # [ref.pot]
