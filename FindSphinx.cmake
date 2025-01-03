@@ -138,7 +138,23 @@ if(Sphinx_BUILD_EXECUTABLE)
         ERROR_VARIABLE  _Sphinx_VERSION_ERROR   ERROR_STRIP_TRAILING_WHITESPACE)
 
     if (_Sphinx_VERSION_RESULT EQUAL 0)
-        string(REGEX MATCH "([0-9]+\\.[0-9]+\\.[0-9]+)" Sphinx_VERSION ${_Sphinx_VERSION_OUTPUT})
+        # For Sphinx >= 1.2.3
+        if     (NOT "${_Sphinx_VERSION_OUTPUT}" STREQUAL "")
+            # For Python 3, outputs will be dumped into stdout.
+            string(REGEX MATCH "[0-9]+\\.[0-9]+\\.[0-9]+" Sphinx_VERSION ${_Sphinx_VERSION_OUTPUT})
+        elseif (NOT "${_Sphinx_VERSION_ERROR}" STREQUAL "")
+            # For Python 2, outputs will be dumped into stderr.
+            string(REGEX MATCH "[0-9]+\\.[0-9]+\\.[0-9]+" Sphinx_VERSION ${_Sphinx_VERSION_ERROR})
+        else ()
+            message(FATAL_ERROR "Failed to find Sphinx_VERSION.")
+        endif()
+        string(REGEX MATCH "([0-9]+)\\.([0-9]+)\\.([0-9]+)" _ ${Sphinx_VERSION})
+        set(Sphinx_VERSION_MAJOR "${CMAKE_MATCH_1}")
+        set(Sphinx_VERSION_MINOR "${CMAKE_MATCH_2}")
+        set(Sphinx_VERSION_PATCH "${CMAKE_MATCH_3}")
+    elseif (_Sphinx_VERSION_RESULT EQUAL 1)
+        # For Sphinx < 1.2.3
+        string(REGEX MATCH "[0-9]+\\.[0-9]+\\.[0-9]+" Sphinx_VERSION ${_Sphinx_VERSION_ERROR})
         string(REGEX MATCH "([0-9]+)\\.([0-9]+)\\.([0-9]+)" _ ${Sphinx_VERSION})
         set(Sphinx_VERSION_MAJOR "${CMAKE_MATCH_1}")
         set(Sphinx_VERSION_MINOR "${CMAKE_MATCH_2}")
