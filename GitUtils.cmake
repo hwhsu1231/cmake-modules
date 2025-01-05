@@ -10,7 +10,7 @@ GitUtilities
   .. code-block:: cmake
 
     get_git_latest_branch_on_branch_pattern(
-        IN_REPO_PATH        "${PROJ_OUT_REPO_DIR}"
+        IN_LOCAL_PATH        "${PROJ_OUT_REPO_DIR}"
         IN_SOURCE_TYPE      "local"
         IN_BRANCH_PATTERN   "${BRANCH_PATTERN}"
         IN_BRANCH_SUFFIX    "${BRANCH_SUFFIX}"
@@ -21,7 +21,7 @@ GitUtilities
   .. code-block:: cmake
 
     get_git_latest_commit_on_branch_name(
-        IN_REPO_PATH        "${PROJ_OUT_REPO_DIR}"
+        IN_LOCAL_PATH        "${PROJ_OUT_REPO_DIR}"
         IN_SOURCE_TYPE      "local"
         IN_BRANCH_NAME      "${BRANCH_NAME}"
         OUT_COMMIT_DATE     LATEST_POT_COMMIT_DATE
@@ -33,7 +33,7 @@ GitUtilities
   .. code-block:: cmake
 
     get_git_latest_tag_on_tag_pattern(
-        IN_REPO_PATH        "${PROJ_OUT_REPO_DIR}"
+        IN_LOCAL_PATH        "${PROJ_OUT_REPO_DIR}"
         IN_SOURCE_TYPE      "local"
         IN_TAG_PATTERN      "${TAG_PATTERN}"
         IN_TAG_SUFFIX       "${TAG_SUFFIX}"
@@ -44,7 +44,7 @@ GitUtilities
   .. code-block:: cmake
 
     switch_to_git_reference_on_branch(
-        IN_REPO_PATH        "${PROJ_OUT_REPO_DIR}"
+        IN_LOCAL_PATH        "${PROJ_OUT_REPO_DIR}"
         IN_REFERENCE        "${SWITCH_REFERENCE}"
         IN_BRANCH           "current")
 
@@ -54,7 +54,7 @@ GitUtilities
 
     create_git_worktree_for_l10n_branch(
         IN_REMOTE_URL       "${REMOTE_URL_OF_L10N}"
-        IN_REPO_PATH        "${PROJ_SOURCE_DIR}"
+        IN_LOCAL_PATH        "${PROJ_SOURCE_DIR}"
         IN_WORKTREE_PATH    "${PROJ_L10N_DIR}")
 
 #]============================================================]
@@ -73,7 +73,7 @@ function(create_git_worktree_for_l10n_branch)
     #
     set(OPTIONS)
     set(ONE_VALUE_ARGS      IN_REMOTE_URL
-                            IN_REPO_PATH
+                            IN_LOCAL_PATH
                             IN_WORKTREE_PATH)
     set(MULTI_VALUE_ARGS)
     cmake_parse_arguments(CGWLB
@@ -85,7 +85,7 @@ function(create_git_worktree_for_l10n_branch)
     # Ensure all required arguments are provided.
     #
     set(REQUIRED_ARGS       IN_REMOTE_URL
-                            IN_REPO_PATH
+                            IN_LOCAL_PATH
                             IN_WORKTREE_PATH)
     foreach(ARG ${REQUIRED_ARGS})
         if(NOT DEFINED CGWLB_${ARG})
@@ -167,7 +167,7 @@ function(create_git_worktree_for_l10n_branch)
                 message(STATUS "Prepare to create a git worktree.")
                 execute_process(
                     COMMAND ${Git_EXECUTABLE} remote
-                    WORKING_DIRECTORY ${CGWLB_IN_REPO_PATH}
+                    WORKING_DIRECTORY ${CGWLB_IN_LOCAL_PATH}
                     RESULT_VARIABLE RES_VAR
                     OUTPUT_VARIABLE OUT_VAR OUTPUT_STRIP_TRAILING_WHITESPACE
                     ERROR_VARIABLE  ERR_VAR ERROR_STRIP_TRAILING_WHITESPACE)
@@ -188,7 +188,7 @@ function(create_git_worktree_for_l10n_branch)
                     COMMAND ${Git_EXECUTABLE} config --get-all
                             remote.${REMOTE_NAME}.fetch
                             refs/heads/l10n:refs/remotes/${REMOTE_NAME}/l10n
-                    WORKING_DIRECTORY ${CGWLB_IN_REPO_PATH}
+                    WORKING_DIRECTORY ${CGWLB_IN_LOCAL_PATH}
                     RESULT_VARIABLE RES_VAR
                     OUTPUT_VARIABLE OUT_VAR OUTPUT_STRIP_TRAILING_WHITESPACE
                     ERROR_VARIABLE  ERR_VAR ERROR_STRIP_TRAILING_WHITESPACE)
@@ -200,7 +200,7 @@ function(create_git_worktree_for_l10n_branch)
                         COMMAND ${Git_EXECUTABLE} config --add
                                 remote.${REMOTE_NAME}.fetch
                                 +refs/heads/l10n:refs/remotes/${REMOTE_NAME}/l10n
-                        WORKING_DIRECTORY ${CGWLB_IN_REPO_PATH}
+                        WORKING_DIRECTORY ${CGWLB_IN_LOCAL_PATH}
                         ECHO_OUTPUT_VARIABLE
                         ECHO_ERROR_VARIABLE
                         COMMAND_ERROR_IS_FATAL ANY)
@@ -215,7 +215,7 @@ function(create_git_worktree_for_l10n_branch)
                 execute_process(
                     COMMAND ${Git_EXECUTABLE} config --get-all
                             remote.${REMOTE_NAME}.fetch
-                    WORKING_DIRECTORY ${CGWLB_IN_REPO_PATH}
+                    WORKING_DIRECTORY ${CGWLB_IN_LOCAL_PATH}
                     ECHO_OUTPUT_VARIABLE
                     ECHO_ERROR_VARIABLE
                     COMMAND_ERROR_IS_FATAL ANY)
@@ -226,13 +226,13 @@ function(create_git_worktree_for_l10n_branch)
                 message("")
                 execute_process(
                     COMMAND ${Git_EXECUTABLE} fetch ${REMOTE_NAME} l10n:l10n --verbose --update-head-ok
-                    WORKING_DIRECTORY ${CGWLB_IN_REPO_PATH}
+                    WORKING_DIRECTORY ${CGWLB_IN_LOCAL_PATH}
                     ECHO_OUTPUT_VARIABLE
                     ECHO_ERROR_VARIABLE
                     COMMAND_ERROR_IS_FATAL ANY)
                 execute_process(
                     COMMAND ${Git_EXECUTABLE} branch --set-upstream-to=${REMOTE_NAME}/l10n l10n
-                    WORKING_DIRECTORY ${CGWLB_IN_REPO_PATH}
+                    WORKING_DIRECTORY ${CGWLB_IN_LOCAL_PATH}
                     ECHO_OUTPUT_VARIABLE
                     ECHO_ERROR_VARIABLE
                     COMMAND_ERROR_IS_FATAL ANY)
@@ -243,19 +243,19 @@ function(create_git_worktree_for_l10n_branch)
                 message("")
                 execute_process(
                     COMMAND ${CMAKE_COMMAND} -E rm -rf ${CGWLB_IN_WORKTREE_PATH}
-                    WORKING_DIRECTORY ${CGWLB_IN_REPO_PATH}
+                    WORKING_DIRECTORY ${CGWLB_IN_LOCAL_PATH}
                     ECHO_OUTPUT_VARIABLE
                     ECHO_ERROR_VARIABLE
                     COMMAND_ERROR_IS_FATAL ANY)
                 execute_process(
                     COMMAND ${Git_EXECUTABLE} worktree prune
-                    WORKING_DIRECTORY ${CGWLB_IN_REPO_PATH}
+                    WORKING_DIRECTORY ${CGWLB_IN_LOCAL_PATH}
                     ECHO_OUTPUT_VARIABLE
                     ECHO_ERROR_VARIABLE
                     COMMAND_ERROR_IS_FATAL ANY)
                 execute_process(
                     COMMAND ${Git_EXECUTABLE} worktree add ${CGWLB_IN_WORKTREE_PATH} l10n
-                    WORKING_DIRECTORY ${CGWLB_IN_REPO_PATH}
+                    WORKING_DIRECTORY ${CGWLB_IN_LOCAL_PATH}
                     ECHO_OUTPUT_VARIABLE
                     ECHO_ERROR_VARIABLE
                     COMMAND_ERROR_IS_FATAL ANY)
@@ -273,7 +273,7 @@ function(get_git_latest_branch_on_branch_pattern)
     # Parse arguments.
     #
     set(OPTIONS)
-    set(ONE_VALUE_ARGS      IN_REPO_PATH
+    set(ONE_VALUE_ARGS      IN_LOCAL_PATH
                             IN_SOURCE_TYPE
                             IN_BRANCH_PATTERN
                             IN_BRANCH_SUFFIX
@@ -287,7 +287,7 @@ function(get_git_latest_branch_on_branch_pattern)
     #
     # Ensure all required arguments are provided.
     #
-    set(REQUIRED_ARGS       IN_REPO_PATH
+    set(REQUIRED_ARGS       IN_LOCAL_PATH
                             IN_BRANCH_PATTERN
                             IN_SOURCE_TYPE
                             OUT_BRANCH)
@@ -309,11 +309,11 @@ function(get_git_latest_branch_on_branch_pattern)
     # - If IN_SOURCE_TYPE is remote, then set GGLBBP_REPO_SOURCE to the remote url of the repository.
     #
     if(GGLBBP_IN_SOURCE_TYPE STREQUAL "local")
-        set(GGLBBP_REPO_SOURCE "${GGLBBP_IN_REPO_PATH}")
+        set(GGLBBP_REPO_SOURCE "${GGLBBP_IN_LOCAL_PATH}")
     elseif(GGLBBP_IN_SOURCE_TYPE STREQUAL "remote")
         execute_process(
             COMMAND ${Git_EXECUTABLE} remote
-            WORKING_DIRECTORY ${GGLBBP_IN_REPO_PATH}
+            WORKING_DIRECTORY ${GGLBBP_IN_LOCAL_PATH}
             RESULT_VARIABLE RES_VAR
             OUTPUT_VARIABLE OUT_VAR OUTPUT_STRIP_TRAILING_WHITESPACE
             ERROR_VARIABLE  ERR_VAR ERROR_STRIP_TRAILING_WHITESPACE)
@@ -329,7 +329,7 @@ function(get_git_latest_branch_on_branch_pattern)
         endif()
         execute_process(
             COMMAND ${Git_EXECUTABLE} remote get-url ${GGLBBP_REPO_REMOTE_NAME}
-            WORKING_DIRECTORY ${GGLBBP_IN_REPO_PATH}
+            WORKING_DIRECTORY ${GGLBBP_IN_LOCAL_PATH}
             RESULT_VARIABLE RES_VAR
             OUTPUT_VARIABLE OUT_VAR OUTPUT_STRIP_TRAILING_WHITESPACE
             ERROR_VARIABLE  ERR_VAR ERROR_STRIP_TRAILING_WHITESPACE)
@@ -351,7 +351,7 @@ function(get_git_latest_branch_on_branch_pattern)
     #
     execute_process(
         COMMAND ${Git_EXECUTABLE} config versionsort.suffix "${GGLBBP_IN_BRANCH_SUFFIX}"
-        WORKING_DIRECTORY ${GGLBBP_IN_REPO_PATH}
+        WORKING_DIRECTORY ${GGLBBP_IN_LOCAL_PATH}
         RESULT_VARIABLE RES_VAR
         OUTPUT_VARIABLE OUT_VAR OUTPUT_STRIP_TRAILING_WHITESPACE
         ERROR_VARIABLE  ERR_VAR ERROR_STRIP_TRAILING_WHITESPACE)
@@ -373,7 +373,7 @@ function(get_git_latest_branch_on_branch_pattern)
                 --heads
                 --sort=-v:refname
                 ${GGLBBP_REPO_SOURCE}
-        WORKING_DIRECTORY ${GGLBBP_IN_REPO_PATH}
+        WORKING_DIRECTORY ${GGLBBP_IN_LOCAL_PATH}
         RESULT_VARIABLE RES_VAR
         OUTPUT_VARIABLE OUT_VAR OUTPUT_STRIP_TRAILING_WHITESPACE
         ERROR_VARIABLE  ERR_VAR ERROR_STRIP_TRAILING_WHITESPACE)
@@ -406,7 +406,7 @@ function(get_git_latest_commit_on_branch_name)
     # Parse arguments.
     #
     set(OPTIONS)
-    set(ONE_VALUE_ARGS      IN_REPO_PATH
+    set(ONE_VALUE_ARGS      IN_LOCAL_PATH
                             IN_SOURCE_TYPE
                             IN_BRANCH_NAME
                             OUT_COMMIT_DATE
@@ -421,7 +421,7 @@ function(get_git_latest_commit_on_branch_name)
     #
     # Ensure all required arguments are provided.
     #
-    set(REQUIRED_ARGS       IN_REPO_PATH
+    set(REQUIRED_ARGS       IN_LOCAL_PATH
                             IN_SOURCE_TYPE
                             IN_BRANCH_NAME)
     foreach(ARG ${REQUIRED_ARGS})
@@ -440,11 +440,11 @@ function(get_git_latest_commit_on_branch_name)
     # Get the local/remote repository source.
     #
     if(GGLCBN_IN_SOURCE_TYPE STREQUAL "local")
-        set(GGLCBN_REPO_SOURCE "${GGLCBN_IN_REPO_PATH}")
+        set(GGLCBN_REPO_SOURCE "${GGLCBN_IN_LOCAL_PATH}")
     elseif(GGLCBN_IN_SOURCE_TYPE STREQUAL "remote")
         execute_process(
             COMMAND ${Git_EXECUTABLE} remote get-url origin
-            WORKING_DIRECTORY ${GGLCBN_IN_REPO_PATH}
+            WORKING_DIRECTORY ${GGLCBN_IN_LOCAL_PATH}
             RESULT_VARIABLE RES_VAR
             OUTPUT_VARIABLE OUT_VAR OUTPUT_STRIP_TRAILING_WHITESPACE
             ERROR_VARIABLE  ERR_VAR ERROR_STRIP_TRAILING_WHITESPACE)
@@ -471,7 +471,7 @@ function(get_git_latest_commit_on_branch_name)
                 --sort=-v:refname
                 ${GGLCBN_REPO_SOURCE}
                 ${GGLCBN_IN_BRANCH_NAME}
-        WORKING_DIRECTORY ${GGLCBN_IN_REPO_PATH}
+        WORKING_DIRECTORY ${GGLCBN_IN_LOCAL_PATH}
         RESULT_VARIABLE RES_VAR
         OUTPUT_VARIABLE OUT_VAR OUTPUT_STRIP_TRAILING_WHITESPACE
         ERROR_VARIABLE  ERR_VAR ERROR_STRIP_TRAILING_WHITESPACE)
@@ -498,7 +498,7 @@ function(get_git_latest_commit_on_branch_name)
                 ${GGLCBN_HEAD_OID}
                 --depth=1
                 --verbose
-        WORKING_DIRECTORY ${GGLCBN_IN_REPO_PATH}
+        WORKING_DIRECTORY ${GGLCBN_IN_LOCAL_PATH}
         RESULT_VARIABLE RES_VAR
         OUTPUT_VARIABLE OUT_VAR OUTPUT_STRIP_TRAILING_WHITESPACE
         ERROR_VARIABLE  ERR_VAR ERROR_STRIP_TRAILING_WHITESPACE)
@@ -519,7 +519,7 @@ function(get_git_latest_commit_on_branch_name)
                 --no-patch
                 --format=%H
                 FETCH_HEAD
-        WORKING_DIRECTORY ${GGLCBN_IN_REPO_PATH}
+        WORKING_DIRECTORY ${GGLCBN_IN_LOCAL_PATH}
         RESULT_VARIABLE RES_VAR
         OUTPUT_VARIABLE OUT_VAR OUTPUT_STRIP_TRAILING_WHITESPACE
         ERROR_VARIABLE  ERR_VAR ERROR_STRIP_TRAILING_WHITESPACE)
@@ -541,7 +541,7 @@ function(get_git_latest_commit_on_branch_name)
                 --no-patch
                 --format=%ci
                 FETCH_HEAD
-        WORKING_DIRECTORY ${GGLCBN_IN_REPO_PATH}
+        WORKING_DIRECTORY ${GGLCBN_IN_LOCAL_PATH}
         RESULT_VARIABLE RES_VAR
         OUTPUT_VARIABLE OUT_VAR OUTPUT_STRIP_TRAILING_WHITESPACE
         ERROR_VARIABLE  ERR_VAR ERROR_STRIP_TRAILING_WHITESPACE)
@@ -563,7 +563,7 @@ function(get_git_latest_commit_on_branch_name)
                 --no-patch
                 --format=%s
                 FETCH_HEAD
-        WORKING_DIRECTORY ${GGLCBN_IN_REPO_PATH}
+        WORKING_DIRECTORY ${GGLCBN_IN_LOCAL_PATH}
         RESULT_VARIABLE RES_VAR
         OUTPUT_VARIABLE OUT_VAR OUTPUT_STRIP_TRAILING_WHITESPACE
         ERROR_VARIABLE  ERR_VAR ERROR_STRIP_TRAILING_WHITESPACE)
@@ -593,7 +593,7 @@ function(get_git_latest_tag_on_tag_pattern)
     # Parse arguments.
     #
     set(OPTIONS)
-    set(ONE_VALUE_ARGS      IN_REPO_PATH
+    set(ONE_VALUE_ARGS      IN_LOCAL_PATH
                             IN_SOURCE_TYPE
                             IN_TAG_PATTERN
                             IN_TAG_SUFFIX
@@ -607,7 +607,7 @@ function(get_git_latest_tag_on_tag_pattern)
     #
     # Ensure all required arguments are provided.
     #
-    set(REQUIRED_ARGS       IN_REPO_PATH
+    set(REQUIRED_ARGS       IN_LOCAL_PATH
                             IN_TAG_PATTERN
                             IN_SOURCE_TYPE
                             OUT_TAG)
@@ -629,11 +629,11 @@ function(get_git_latest_tag_on_tag_pattern)
     # - If IN_SOURCE_TYPE is remote, then set GGLTTP_REPO_SOURCE to the remote url of the repository.
     #
     if(GGLTTP_IN_SOURCE_TYPE STREQUAL "local")
-        set(GGLTTP_REPO_SOURCE "${GGLTTP_IN_REPO_PATH}")
+        set(GGLTTP_REPO_SOURCE "${GGLTTP_IN_LOCAL_PATH}")
     elseif(GGLTTP_IN_SOURCE_TYPE STREQUAL "remote")
         execute_process(
             COMMAND ${Git_EXECUTABLE} remote
-            WORKING_DIRECTORY ${GGLTTP_IN_REPO_PATH}
+            WORKING_DIRECTORY ${GGLTTP_IN_LOCAL_PATH}
             RESULT_VARIABLE RES_VAR
             OUTPUT_VARIABLE OUT_VAR OUTPUT_STRIP_TRAILING_WHITESPACE
             ERROR_VARIABLE  ERR_VAR ERROR_STRIP_TRAILING_WHITESPACE)
@@ -649,7 +649,7 @@ function(get_git_latest_tag_on_tag_pattern)
         endif()
         execute_process(
             COMMAND ${Git_EXECUTABLE} remote get-url ${GGLTTP_REPO_REMOTE_NAME}
-            WORKING_DIRECTORY ${GGLTTP_IN_REPO_PATH}
+            WORKING_DIRECTORY ${GGLTTP_IN_LOCAL_PATH}
             RESULT_VARIABLE RES_VAR
             OUTPUT_VARIABLE OUT_VAR OUTPUT_STRIP_TRAILING_WHITESPACE
             ERROR_VARIABLE  ERR_VAR ERROR_STRIP_TRAILING_WHITESPACE)
@@ -671,7 +671,7 @@ function(get_git_latest_tag_on_tag_pattern)
     #
     execute_process(
         COMMAND ${Git_EXECUTABLE} config versionsort.suffix "${GGLTTP_IN_TAG_SUFFIX}"
-        WORKING_DIRECTORY ${GGLTTP_IN_REPO_PATH}
+        WORKING_DIRECTORY ${GGLTTP_IN_LOCAL_PATH}
         RESULT_VARIABLE RES_VAR
         OUTPUT_VARIABLE OUT_VAR OUTPUT_STRIP_TRAILING_WHITESPACE
         ERROR_VARIABLE  ERR_VAR ERROR_STRIP_TRAILING_WHITESPACE)
@@ -693,7 +693,7 @@ function(get_git_latest_tag_on_tag_pattern)
                 --tags
                 --sort=-v:refname
                 ${GGLTTP_REPO_SOURCE}
-        WORKING_DIRECTORY ${GGLTTP_IN_REPO_PATH}
+        WORKING_DIRECTORY ${GGLTTP_IN_LOCAL_PATH}
         RESULT_VARIABLE RES_VAR
         OUTPUT_VARIABLE OUT_VAR OUTPUT_STRIP_TRAILING_WHITESPACE
         ERROR_VARIABLE  ERR_VAR ERROR_STRIP_TRAILING_WHITESPACE)
@@ -726,7 +726,7 @@ function(switch_to_git_reference_on_branch)
     # Parse arguments.
     #
     set(OPTIONS             NO_SUBMODULE)
-    set(ONE_VALUE_ARGS      IN_REPO_PATH
+    set(ONE_VALUE_ARGS      IN_LOCAL_PATH
                             IN_REFERENCE
                             IN_BRANCH)
     set(MULTI_VALUE_ARGS)
@@ -738,7 +738,7 @@ function(switch_to_git_reference_on_branch)
     #
     # Ensure all required arguments are provided.
     #
-    set(REQUIRED_ARGS       IN_REPO_PATH
+    set(REQUIRED_ARGS       IN_LOCAL_PATH
                             IN_REFERENCE
                             IN_BRANCH)
     foreach(ARG ${REQUIRED_ARGS})
@@ -756,17 +756,17 @@ function(switch_to_git_reference_on_branch)
     #
     # Switch to ${SGRB_IN_REFERENCE} on branch ${SGRB_IN_BRANCH}.
     #
-    if(EXISTS "${SGRB_IN_REPO_PATH}/.gitmodules" AND NOT SGRB_NO_SUBMODULE)
+    if(EXISTS "${SGRB_IN_LOCAL_PATH}/.gitmodules" AND NOT SGRB_NO_SUBMODULE)
         execute_process(
             COMMAND ${Git_EXECUTABLE} submodule deinit --all --force
-            WORKING_DIRECTORY ${SGRB_IN_REPO_PATH}
+            WORKING_DIRECTORY ${SGRB_IN_LOCAL_PATH}
             ECHO_OUTPUT_VARIABLE
             ECHO_ERROR_VARIABLE
             COMMAND_ERROR_IS_FATAL ANY)
         message("")
         execute_process(
             COMMAND ${CMAKE_COMMAND} -E rm -rf .git/modules
-            WORKING_DIRECTORY ${SGRB_IN_REPO_PATH}
+            WORKING_DIRECTORY ${SGRB_IN_LOCAL_PATH}
             ECHO_OUTPUT_VARIABLE
             ECHO_ERROR_VARIABLE
             COMMAND_ERROR_IS_FATAL ANY)
@@ -775,7 +775,7 @@ function(switch_to_git_reference_on_branch)
     endif()
     execute_process(
         COMMAND ${Git_EXECUTABLE} checkout -B ${SGRB_IN_BRANCH}
-        WORKING_DIRECTORY ${SGRB_IN_REPO_PATH}
+        WORKING_DIRECTORY ${SGRB_IN_LOCAL_PATH}
         ECHO_OUTPUT_VARIABLE
         ECHO_ERROR_VARIABLE
         COMMAND_ERROR_IS_FATAL ANY)
@@ -785,22 +785,22 @@ function(switch_to_git_reference_on_branch)
                 ${SGRB_IN_REFERENCE}
                 --depth=1
                 --verbose
-        WORKING_DIRECTORY ${SGRB_IN_REPO_PATH}
+        WORKING_DIRECTORY ${SGRB_IN_LOCAL_PATH}
         ECHO_OUTPUT_VARIABLE
         ECHO_ERROR_VARIABLE
         COMMAND_ERROR_IS_FATAL ANY)
     message("")
     execute_process(
         COMMAND ${Git_EXECUTABLE} reset --hard FETCH_HEAD
-        WORKING_DIRECTORY ${SGRB_IN_REPO_PATH}
+        WORKING_DIRECTORY ${SGRB_IN_LOCAL_PATH}
         ECHO_OUTPUT_VARIABLE
         ECHO_ERROR_VARIABLE
         COMMAND_ERROR_IS_FATAL ANY)
-    if(EXISTS "${SGRB_IN_REPO_PATH}/.gitmodules" AND NOT SGRB_NO_SUBMODULE)
+    if(EXISTS "${SGRB_IN_LOCAL_PATH}/.gitmodules" AND NOT SGRB_NO_SUBMODULE)
         message("")
         execute_process(
             COMMAND ${Git_EXECUTABLE} submodule sync
-            WORKING_DIRECTORY ${SGRB_IN_REPO_PATH}
+            WORKING_DIRECTORY ${SGRB_IN_LOCAL_PATH}
             ECHO_OUTPUT_VARIABLE
             ECHO_ERROR_VARIABLE
             COMMAND_ERROR_IS_FATAL ANY)
@@ -810,7 +810,7 @@ function(switch_to_git_reference_on_branch)
                     --init
                     --recursive
                     --depth=1
-            WORKING_DIRECTORY ${SGRB_IN_REPO_PATH}
+            WORKING_DIRECTORY ${SGRB_IN_LOCAL_PATH}
             ECHO_OUTPUT_VARIABLE
             ECHO_ERROR_VARIABLE
             COMMAND_ERROR_IS_FATAL ANY)
