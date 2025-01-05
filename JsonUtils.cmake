@@ -126,7 +126,7 @@ Get Reference of Latest from Repository and Current from Json
 
     get_reference_of_latest_from_repo_and_current_from_json(
         IN_JSON_CNT             "${REFERENCES_JSON_CNT}"
-        IN_REPO_PATH            "${PROJ_OUT_REPO_DIR}"
+        IN_LOCAL_PATH           "${PROJ_OUT_REPO_DIR}"
         IN_DOT_NOTATION         ".pot"
         IN_VERSION_TYPE         "${VERSION_TYPE}"
         IN_BRANCH_NAME          "${BRANCH_NAME}"
@@ -140,8 +140,8 @@ Get Reference of Latest from Repository and Current from Json
   .. code-block:: cmake
 
     get_reference_of_latest_from_repo_and_current_from_json(
-        IN_JSON_CNT            "${REFERENCES_JSON_CNT}"
-        IN_REPO_PATH            "${PROJ_OUT_REPO_DIR}"
+        IN_JSON_CNT             "${REFERENCES_JSON_CNT}"
+        IN_LOCAL_PATH           "${PROJ_OUT_REPO_DIR}"
         IN_DOT_NOTATION         ".conan"
         IN_VERSION_TYPE         "${VERSION_TYPE}"
         IN_BRANCH_NAME          "${BRANCH_NAME}"
@@ -1039,9 +1039,9 @@ endfunction()
 #           Input JSON content as a string containing the current reference information.
 # :type     IN_JSON_CNT: string
 #
-# :keyword  IN_REPO_PATH: (Required)
+# :keyword  IN_LOCAL_PATH: (Required)
 #           Path to the local repository to retrieve the latest reference.
-# :type     IN_REPO_PATH: string
+# :type     IN_LOCAL_PATH: string
 #
 # :keyword  IN_DOT_NOTATION: (Required)
 #           Dot notation path used to extract the current reference from the input JSON content.
@@ -1085,7 +1085,7 @@ function(get_reference_of_latest_from_repo_and_current_from_json)
     #
     set(OPTIONS)
     set(ONE_VALUE_ARGS      IN_JSON_CNT
-                            IN_REPO_PATH
+                            IN_LOCAL_PATH
                             IN_DOT_NOTATION
                             IN_VERSION_TYPE
                             IN_BRANCH_NAME
@@ -1105,7 +1105,7 @@ function(get_reference_of_latest_from_repo_and_current_from_json)
     # Ensure all required arguments are provided.
     #
     set(REQUIRED_ARGS       IN_JSON_CNT
-                            IN_REPO_PATH
+                            IN_LOCAL_PATH
                             IN_DOT_NOTATION
                             IN_VERSION_TYPE)
     foreach(ARG ${REQUIRED_ARGS})
@@ -1128,7 +1128,7 @@ function(get_reference_of_latest_from_repo_and_current_from_json)
             IN_DOT_NOTATION             ".commit.hash"
             OUT_JSON_VALUE              CURRENT_COMMIT_HASH)
         get_git_latest_commit_on_branch_name(
-            IN_REPO_PATH                "${GRLCJ_IN_REPO_PATH}"
+            IN_LOCAL_PATH               "${GRLCJ_IN_LOCAL_PATH}"
             IN_SOURCE_TYPE              "local"
             IN_BRANCH_NAME              "${GRLCJ_IN_BRANCH_NAME}"
             OUT_COMMIT_DATE             LATEST_COMMIT_DATE
@@ -1152,7 +1152,7 @@ function(get_reference_of_latest_from_repo_and_current_from_json)
             IN_DOT_NOTATION             ".tag"
             OUT_JSON_VALUE              CURRENT_TAG)
         get_git_latest_tag_on_tag_pattern(
-            IN_REPO_PATH                "${PROJ_OUT_REPO_DIR}"
+            IN_LOCAL_PATH               "${PROJ_OUT_REPO_DIR}"
             IN_SOURCE_TYPE              "local"
             IN_TAG_PATTERN              "${GRLCJ_IN_TAG_PATTERN}"
             IN_TAG_SUFFIX               "${GRLCJ_IN_TAG_SUFFIX}"

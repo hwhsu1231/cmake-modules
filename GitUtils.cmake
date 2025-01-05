@@ -274,6 +274,7 @@ function(get_git_latest_branch_on_branch_pattern)
     #
     set(OPTIONS)
     set(ONE_VALUE_ARGS      IN_LOCAL_PATH
+                            IN_REMOTE_URL
                             IN_SOURCE_TYPE
                             IN_BRANCH_PATTERN
                             IN_BRANCH_SUFFIX
@@ -305,75 +306,64 @@ function(get_git_latest_branch_on_branch_pattern)
     endif()
     #
     # Determine the repository source.
-    # - If IN_SOURCE_TYPE is local,  then set GGLBBP_REPO_SOURCE to the local path of the repository.
-    # - If IN_SOURCE_TYPE is remote, then set GGLBBP_REPO_SOURCE to the remote url of the repository.
+    # - If IN_SOURCE_TYPE is local,  then set REPOSITORY to the local path of the repository.
+    # - If IN_SOURCE_TYPE is remote, then set REPOSITORY to the remote url of the repository.
+    #   - If IN_REMOTE_URL is provided,     then get the remote url from IN_REMOTE_URL.
+    #   - If IN_REMOTE_URL is NOT provided, then get the remote url from IN_LOCAL_PATH.
     #
-    if(GGLBBP_IN_SOURCE_TYPE STREQUAL "local")
-        set(GGLBBP_REPO_SOURCE "${GGLBBP_IN_LOCAL_PATH}")
-    elseif(GGLBBP_IN_SOURCE_TYPE STREQUAL "remote")
-        execute_process(
-            COMMAND ${Git_EXECUTABLE} remote
-            WORKING_DIRECTORY ${GGLBBP_IN_LOCAL_PATH}
-            RESULT_VARIABLE RES_VAR
-            OUTPUT_VARIABLE OUT_VAR OUTPUT_STRIP_TRAILING_WHITESPACE
-            ERROR_VARIABLE  ERR_VAR ERROR_STRIP_TRAILING_WHITESPACE)
-        if(RES_VAR EQUAL 0)
-            set(GGLBBP_REPO_REMOTE_NAME "${OUT_VAR}")
-        else()
-            string(APPEND FAILURE_REASON
-            "The command failed with fatal errors.\n\n"
-            "    result:\n\n${RES_VAR}\n\n"
-            "    stdout:\n\n${OUT_VAR}\n\n"
-            "    stderr:\n\n${ERR_VAR}")
-            message(FATAL_ERROR "${FAILURE_REASON}")
-        endif()
-        execute_process(
-            COMMAND ${Git_EXECUTABLE} remote get-url ${GGLBBP_REPO_REMOTE_NAME}
-            WORKING_DIRECTORY ${GGLBBP_IN_LOCAL_PATH}
-            RESULT_VARIABLE RES_VAR
-            OUTPUT_VARIABLE OUT_VAR OUTPUT_STRIP_TRAILING_WHITESPACE
-            ERROR_VARIABLE  ERR_VAR ERROR_STRIP_TRAILING_WHITESPACE)
-        if(RES_VAR EQUAL 0)
-            set(GGLBBP_REPO_SOURCE "${OUT_VAR}")
-        else()
-            string(APPEND FAILURE_REASON
-            "The command failed with fatal errors.\n\n"
-            "    result:\n\n${RES_VAR}\n\n"
-            "    stdout:\n\n${OUT_VAR}\n\n"
-            "    stderr:\n\n${ERR_VAR}")
-            message(FATAL_ERROR "${FAILURE_REASON}")
+    if (GGLBBP_IN_SOURCE_TYPE STREQUAL "local")
+        set(REPOSITORY  "${GGLBBP_IN_LOCAL_PATH}")
+    elseif (GGLBBP_IN_SOURCE_TYPE STREQUAL "remote")
+        if (DEFINED GGLBBP_IN_REMOTE_URL)
+            set(REPOSITORY  "${GGLBBP_IN_REMOTE_URL}")
+        else ()
+            execute_process(
+                COMMAND ${Git_EXECUTABLE} remote
+                WORKING_DIRECTORY ${GGLBBP_IN_LOCAL_PATH}
+                RESULT_VARIABLE RES_VAR
+                OUTPUT_VARIABLE OUT_VAR OUTPUT_STRIP_TRAILING_WHITESPACE
+                ERROR_VARIABLE  ERR_VAR ERROR_STRIP_TRAILING_WHITESPACE)
+            if(RES_VAR EQUAL 0)
+                set(GGLBBP_REPO_REMOTE_NAME "${OUT_VAR}")
+            else()
+                string(APPEND FAILURE_REASON
+                "The command failed with fatal errors.\n\n"
+                "    result:\n\n${RES_VAR}\n\n"
+                "    stdout:\n\n${OUT_VAR}\n\n"
+                "    stderr:\n\n${ERR_VAR}")
+                message(FATAL_ERROR "${FAILURE_REASON}")
+            endif()
+            execute_process(
+                COMMAND ${Git_EXECUTABLE} remote get-url ${GGLBBP_REPO_REMOTE_NAME}
+                WORKING_DIRECTORY ${GGLBBP_IN_LOCAL_PATH}
+                RESULT_VARIABLE RES_VAR
+                OUTPUT_VARIABLE OUT_VAR OUTPUT_STRIP_TRAILING_WHITESPACE
+                ERROR_VARIABLE  ERR_VAR ERROR_STRIP_TRAILING_WHITESPACE)
+            if(RES_VAR EQUAL 0)
+                set(REPOSITORY "${OUT_VAR}")
+            else()
+                string(APPEND FAILURE_REASON
+                "The command failed with fatal errors.\n\n"
+                "    result:\n\n${RES_VAR}\n\n"
+                "    stdout:\n\n${OUT_VAR}\n\n"
+                "    stderr:\n\n${ERR_VAR}")
+                message(FATAL_ERROR "${FAILURE_REASON}")
+            endif()
         endif()
     else()
         message(FATAL_ERROR "Invalid IN_SOURCE_TYPE argument. (${GGLBBP_IN_SOURCE_TYPE})")
     endif()
     #
-    # Configures git version sort suffix.
-    #
-    execute_process(
-        COMMAND ${Git_EXECUTABLE} config versionsort.suffix "${GGLBBP_IN_BRANCH_SUFFIX}"
-        WORKING_DIRECTORY ${GGLBBP_IN_LOCAL_PATH}
-        RESULT_VARIABLE RES_VAR
-        OUTPUT_VARIABLE OUT_VAR OUTPUT_STRIP_TRAILING_WHITESPACE
-        ERROR_VARIABLE  ERR_VAR ERROR_STRIP_TRAILING_WHITESPACE)
-    if(RES_VAR EQUAL 0)
-    else()
-        string(APPEND FAILURE_REASON
-        "The command failed with fatal errors.\n\n"
-        "    result:\n\n${RES_VAR}\n\n"
-        "    stdout:\n\n${OUT_VAR}\n\n"
-        "    stderr:\n\n${ERR_VAR}")
-        message(FATAL_ERROR "${FAILURE_REASON}")
-    endif()
-    #
     # Get the list of branches matching the branch pattern.
     #
     execute_process(
-        COMMAND ${Git_EXECUTABLE} ls-remote
+        COMMAND ${Git_EXECUTABLE}
+                -c versionsort.suffix=${GGLBBP_IN_BRANCH_SUFFIX}
+                ls-remote
                 --refs
                 --heads
                 --sort=-v:refname
-                ${GGLBBP_REPO_SOURCE}
-        WORKING_DIRECTORY ${GGLBBP_IN_LOCAL_PATH}
+                ${REPOSITORY}
         RESULT_VARIABLE RES_VAR
         OUTPUT_VARIABLE OUT_VAR OUTPUT_STRIP_TRAILING_WHITESPACE
         ERROR_VARIABLE  ERR_VAR ERROR_STRIP_TRAILING_WHITESPACE)
