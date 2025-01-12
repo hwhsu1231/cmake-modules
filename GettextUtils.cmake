@@ -44,6 +44,7 @@ function(update_sphinx_pot_from_def_to_pkg)
         # Concatenate the package 'sphinx.pot' with the default 'sphinx.pot'.
         #
         message("msgcat:")
+        message("  --quiet")
         message("  --use-first")
         message("  --width        ${USPFSTD_IN_WRAP_WIDTH}")
         message("  --output-file  ${USPFSTD_IN_PKG_FILE}")
@@ -51,6 +52,7 @@ function(update_sphinx_pot_from_def_to_pkg)
         message("  [inputfile]    ${USPFSTD_IN_DEF_FILE}")
         execute_process(
             COMMAND ${Gettext_MSGCAT_EXECUTABLE}
+                    --quiet     # Suppress progress indicator
                     --use-first
                     --width=${USPFSTD_IN_WRAP_WIDTH}
                     --output-file=${USPFSTD_IN_PKG_FILE}
@@ -60,6 +62,13 @@ function(update_sphinx_pot_from_def_to_pkg)
             OUTPUT_VARIABLE OUT_VAR OUTPUT_STRIP_TRAILING_WHITESPACE
             ERROR_VARIABLE  ERR_VAR ERROR_STRIP_TRAILING_WHITESPACE)
         if(RES_VAR EQUAL 0)
+            if(ERR_VAR)
+                string(APPEND WARNING_REASON
+                "The command succeeded but had some warnings.\n\n"
+                "    result:\n\n${RES_VAR}\n\n"
+                "    stderr:\n\n${ERR_VAR}")
+                message("${WARNING_REASON}")
+            endif()
         else()
             string(APPEND FAILURE_REASON
             "The command failed with fatal errors.\n\n"
@@ -168,7 +177,7 @@ function(update_pot_from_src_to_dst)
         find_package(Gettext QUIET MODULE REQUIRED COMPONENTS Msgcat)
     endif()
     #
-    #
+    # Process each .pot file in the source directory.
     #
     file(GLOB_RECURSE SRC_FILES "${UPFSTD_IN_SRC_DIR}/*.pot")
     foreach(SRC_FILE ${SRC_FILES})
@@ -181,6 +190,7 @@ function(update_pot_from_src_to_dst)
             # If the ${DST_FILE} exists, then merge it using msgmerge.
             #
             message("msgmerge:")
+            message("  --quiet")
             message("  --width      ${UPFSTD_IN_WRAP_WIDTH}")
             message("  --backup     off")
             message("  --update")
@@ -190,6 +200,7 @@ function(update_pot_from_src_to_dst)
             message("  [ref.pot]    ${SRC_FILE}")
             execute_process(
                 COMMAND ${Gettext_MSGMERGE_EXECUTABLE}
+                        --quiet     # Suppress progress indicator
                         --width=${UPFSTD_IN_WRAP_WIDTH}
                         --backup=off
                         --update
@@ -201,6 +212,13 @@ function(update_pot_from_src_to_dst)
                 OUTPUT_VARIABLE OUT_VAR OUTPUT_STRIP_TRAILING_WHITESPACE
                 ERROR_VARIABLE  ERR_VAR ERROR_STRIP_TRAILING_WHITESPACE)
             if(RES_VAR EQUAL 0)
+                if(ERR_VAR)
+                    string(APPEND WARNING_REASON
+                    "The command succeeded but had some warnings.\n\n"
+                    "    result:\n\n${RES_VAR}\n\n"
+                    "    stderr:\n\n${ERR_VAR}")
+                    message("${WARNING_REASON}")
+                endif()
             else()
                 string(APPEND FAILURE_REASON
                 "The command failed with fatal errors.\n\n"
@@ -217,11 +235,13 @@ function(update_pot_from_src_to_dst)
             # If the ${DST_FILE} doesn't exist, then create it using msgcat.
             #
             message("msgcat:")
+            message("  --quiet")
             message("  --width        ${UPFSTD_IN_WRAP_WIDTH}")
             message("  --output-file  ${DST_FILE}")
             message("  [inputfile]    ${SRC_FILE}")
             execute_process(
                 COMMAND ${Gettext_MSGCAT_EXECUTABLE}
+                        --quiet       # Suppress progress indicator
                         --width=${UPFSTD_IN_WRAP_WIDTH}
                         --output-file=${DST_FILE}
                         ${SRC_FILE}   # [inputfile]
@@ -229,6 +249,13 @@ function(update_pot_from_src_to_dst)
                 OUTPUT_VARIABLE OUT_VAR OUTPUT_STRIP_TRAILING_WHITESPACE
                 ERROR_VARIABLE  ERR_VAR ERROR_STRIP_TRAILING_WHITESPACE)
             if(RES_VAR EQUAL 0)
+                if(ERR_VAR)
+                    string(APPEND WARNING_REASON
+                    "The command succeeded but had some warnings.\n\n"
+                    "    result:\n\n${RES_VAR}\n\n"
+                    "    stderr:\n\n${ERR_VAR}")
+                    message("${WARNING_REASON}")
+                endif()
             else()
                 string(APPEND FAILURE_REASON
                 "The command failed with fatal errors.\n\n"
@@ -278,7 +305,7 @@ function(update_po_from_pot_in_locale)
         find_package(Gettext QUIET MODULE REQUIRED COMPONENTS Msgmerge Msgcat)
     endif()
     #
-    #
+    # Process .pot files from the locale directory and generate or update corresponding .po files.
     #
     file(GLOB_RECURSE POT_FILES "${UPFP_IN_LOCALE_POT_DIR}/*.pot")
     foreach(POT_FILE ${POT_FILES})
@@ -390,7 +417,7 @@ function(concat_po_from_locale_to_compendium)
         find_package(Gettext QUIET MODULE REQUIRED COMPONENTS Msgcat)
     endif()
     #
-    #
+    # Concatenate all .po files from the locale directory into a single compendium file.
     #
     file(GLOB_RECURSE LOCALE_PO_FILES "${CPFLTC_IN_LOCALE_PO_DIR}/*.po")
     get_filename_component(COMPENDIUM_PO_DIR "${CPFLTC_IN_COMPEND_PO_FILE}" DIRECTORY)
@@ -420,82 +447,6 @@ function(concat_po_from_locale_to_compendium)
         "    stderr:\n\n${ERR_VAR}")
         message(FATAL_ERROR "${FAILURE_REASON}")
     endif()
-endfunction()
-
-
-function(merge_po_from_compendium_to_locale)
-    #
-    # Parse arguments.
-    #
-    set(OPTIONS)
-    set(ONE_VALUE_ARGS      IN_COMPEND_PO_FILE
-                            IN_LOCALE_PO_DIR
-                            IN_LOCALE_POT_DIR
-                            IN_LANGUAGE
-                            IN_WRAP_WIDTH)
-    set(MULTI_VALUE_ARGS)
-    cmake_parse_arguments(MPFCTL
-        "${OPTIONS}"
-        "${ONE_VALUE_ARGS}"
-        "${MULTI_VALUE_ARGS}"
-        ${ARGN})
-    #
-    # Ensure all required arguments are provided.
-    #
-    set(REQUIRED_ARGS       IN_COMPEND_PO_FILE
-                            IN_LOCALE_PO_DIR
-                            IN_LOCALE_POT_DIR
-                            IN_LANGUAGE
-                            IN_WRAP_WIDTH)
-    foreach(ARG ${REQUIRED_ARGS})
-        if(NOT DEFINED MPFCTL_${ARG})
-            message(FATAL_ERROR "Missing ${ARG} argument.")
-        endif()
-    endforeach()
-    #
-    # Find msgmerge executable if not exists.
-    #
-    if (NOT EXISTS "${Gettext_MSGMERGE_EXECUTABLE}")
-        find_package(Gettext QUIET MODULE REQUIRED COMPONENTS Msgmerge)
-    endif()
-    #
-    #
-    #
-    file(GLOB_RECURSE LOCALE_PO_FILES "${MPFCTL_IN_LOCALE_PO_DIR}/*.po")
-    foreach(LOCALE_PO_FILE ${LOCALE_PO_FILES})
-        string(REPLACE "${MPFCTL_IN_LOCALE_PO_DIR}/" "" PO_FILE_RELATIVE "${LOCALE_PO_FILE}")
-        string(REGEX REPLACE "\\.po$" ".pot" POT_FILE_RELATIVE "${PO_FILE_RELATIVE}")
-        set(LOCALE_PO_FILE      "${MPFCTL_IN_LOCALE_PO_DIR}/${PO_FILE_RELATIVE}")
-        set(LOCALE_POT_FILE     "${MPFCTL_IN_LOCALE_POT_DIR}/${POT_FILE_RELATIVE}")
-        message("msgmerge:")
-        message("  --lang           ${MPFCTL_IN_LANGUAGE}")
-        message("  --width          ${MPFCTL_IN_WRAP_WIDTH}")
-        message("  --compendium     ${MPFCTL_IN_COMPEND_PO_FILE}")
-        message("  --output-file    ${LOCALE_PO_FILE}")
-        message("  [def.po]         ${LOCALE_POT_FILE}")
-        message("  [ref.pot]        ${LOCALE_POT_FILE}")
-        execute_process(
-            COMMAND ${Gettext_MSGMERGE_EXECUTABLE}
-                    --lang=${MPFCTL_IN_LANGUAGE}
-                    --width=${MPFCTL_IN_WRAP_WIDTH}
-                    --compendium=${MPFCTL_IN_COMPEND_PO_FILE}
-                    --output-file=${LOCALE_PO_FILE}
-                    ${LOCALE_POT_FILE}  # [def.po]
-                    ${LOCALE_POT_FILE}  # [ref.pot]
-            RESULT_VARIABLE RES_VAR
-            OUTPUT_VARIABLE OUT_VAR OUTPUT_STRIP_TRAILING_WHITESPACE
-            ERROR_VARIABLE  ERR_VAR ERROR_STRIP_TRAILING_WHITESPACE)
-        if(RES_VAR EQUAL 0)
-        else()
-            string(APPEND FAILURE_REASON
-            "The command failed with fatal errors.\n\n"
-            "    result:\n\n${RES_VAR}\n\n"
-            "    stdout:\n\n${OUT_VAR}\n\n"
-            "    stderr:\n\n${ERR_VAR}")
-            message(FATAL_ERROR "${FAILURE_REASON}")
-        endif()
-    endforeach()
-    unset(LOCALE_PO_FILE)
 endfunction()
 
 
@@ -536,7 +487,12 @@ function(merge_po_from_src_to_dst_with_compendium)
         find_package(Gettext QUIET MODULE REQUIRED COMPONENTS Msgmerge)
     endif()
     #
-    #
+    # For each .po file found in the destination locale directory:
+    # - Locate the corresponding .pot file in the destination directory.
+    # - Locate the corresponding .po file in the source directory.
+    # - Determine the compendium file to use:
+    #   - If a matching .po file exists in the source directory, use it as the compendium file.
+    #   - If no matching .po file is found, fall back to the provided general compendium file.
     #
     file(GLOB_RECURSE DST_LOCALE_PO_FILES "${MPFSDC_IN_DST_LOCALE_PO_DIR}/*.po")
     foreach(DST_LOCALE_PO_FILE ${DST_LOCALE_PO_FILES})
@@ -848,7 +804,7 @@ function(copy_po_from_src_to_dst)
         endif()
     endforeach()
     #
-    #
+    # Copy all .po files from the source directory to the destination directory.
     #
     file(GLOB_RECURSE PO_SRC_FILES "${CPFSTD_IN_SRC_DIR}/*.po")
     foreach(PO_SRC_FILE ${PO_SRC_FILES})
