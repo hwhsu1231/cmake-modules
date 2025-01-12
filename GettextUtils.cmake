@@ -98,7 +98,7 @@ function(update_sphinx_pot_from_def_to_pkg)
 endfunction()
 
 
-function(override_header_entry_from_src_to_dst)
+function(_override_header_entry_from_src_to_dst)
     #
     # Parse arguments.
     #
@@ -209,7 +209,7 @@ function(update_pot_from_src_to_dst)
                 "    stderr:\n\n${ERR_VAR}")
                 message(FATAL_ERROR "${FAILURE_REASON}")
             endif()
-            override_header_entry_from_src_to_dst(
+            _override_header_entry_from_src_to_dst(
                 IN_SRC_FILE   "${SRC_FILE}"
                 IN_DST_FILE   "${DST_FILE}")
         else()
@@ -322,7 +322,7 @@ function(update_po_from_pot_in_locale)
                 "    stderr:\n\n${ERR_VAR}")
                 message(FATAL_ERROR "${FAILURE_REASON}")
             endif()
-            override_header_entry_from_src_to_dst(
+            _override_header_entry_from_src_to_dst(
                 IN_SRC_FILE   "${POT_FILE}"
                 IN_DST_FILE   "${PO_FILE}")
         else()
