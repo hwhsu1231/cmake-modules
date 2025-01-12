@@ -582,9 +582,9 @@ macro(_init_references_json_file_for_branch_repository)
 endmacro()
 
 
-#
+#[[[
 # Get members of JSON object.
-#
+#]]
 function(get_members_of_json_object)
     #
     # Parse arguments.
@@ -697,9 +697,9 @@ function(set_members_of_commit_json_object)
 endfunction()
 
 
-#
+#[[[
 # Set members of JSON object for 'reference'.
-#
+#]]
 function(set_members_of_reference_json_object)
     #
     # Parse arguments.
