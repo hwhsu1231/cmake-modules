@@ -44,7 +44,6 @@ function(update_sphinx_pot_from_def_to_pkg)
         # Concatenate the package 'sphinx.pot' with the default 'sphinx.pot'.
         #
         message("msgcat:")
-        message("  --quiet")
         message("  --use-first")
         message("  --width        ${USPFSTD_IN_WRAP_WIDTH}")
         message("  --output-file  ${USPFSTD_IN_PKG_FILE}")
@@ -52,7 +51,6 @@ function(update_sphinx_pot_from_def_to_pkg)
         message("  [inputfile]    ${USPFSTD_IN_DEF_FILE}")
         execute_process(
             COMMAND ${Gettext_MSGCAT_EXECUTABLE}
-                    --quiet     # Suppress progress indicator
                     --use-first
                     --width=${USPFSTD_IN_WRAP_WIDTH}
                     --output-file=${USPFSTD_IN_PKG_FILE}
@@ -235,13 +233,11 @@ function(update_pot_from_src_to_dst)
             # If the ${DST_FILE} doesn't exist, then create it using msgcat.
             #
             message("msgcat:")
-            message("  --quiet")
             message("  --width        ${UPFSTD_IN_WRAP_WIDTH}")
             message("  --output-file  ${DST_FILE}")
             message("  [inputfile]    ${SRC_FILE}")
             execute_process(
                 COMMAND ${Gettext_MSGCAT_EXECUTABLE}
-                        --quiet       # Suppress progress indicator
                         --width=${UPFSTD_IN_WRAP_WIDTH}
                         --output-file=${DST_FILE}
                         ${SRC_FILE}   # [inputfile]
